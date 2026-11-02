@@ -112,8 +112,27 @@ function setupMobileUi() {
     const dj = !$('right-panel').hidden && !$('rp-dj').hidden
     for (const b of nav.children) b.classList.toggle('on', b.dataset.k === 'dj' ? dj : !dj && b.dataset.k === body.dataset.tab)
   }
+  // En "Reproduciendo" los controles van dentro de la pantalla, justo debajo del título (como
+  // Spotify: título → barra de tiempo → botones → letra), y al cerrar regresan a la barra
+  const center = document.querySelector('.bar-center')
+  const barRight = document.querySelector('.bar-right')
+  const extra = document.createElement('div')
+  extra.className = 'm-np-extra'
+  const moveControls = inNp => {
+    if (inNp && center.parentNode !== $('rp-np')) {
+      $('rp-np').querySelector('.np-row').after(center)
+      center.after(extra)
+      extra.append($('btn-lyrics'), $('btn-queue'))
+    } else if (!inNp && center.parentNode === $('rp-np')) {
+      document.querySelector('.bar-left').after(center)
+      barRight.prepend($('btn-lyrics'), $('btn-queue'))
+      extra.remove()
+    }
+  }
   const sync = () => {
-    body.classList.toggle('rp-np', !$('right-panel').hidden && !$('rp-np').hidden)
+    const inNp = !$('right-panel').hidden && !$('rp-np').hidden
+    body.classList.toggle('rp-np', inNp)
+    moveControls(inNp)
     markNav()
   }
   new MutationObserver(sync).observe(body, { subtree: true, attributes: true, attributeFilter: ['hidden'] })

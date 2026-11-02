@@ -59,21 +59,6 @@ html.mobile .bar-seek > span { display: none; }
 html.mobile .bar-seek .slider-track { height: 2px; }
 html.mobile .bar-right { display: none; }
 
-/* "Reproduciendo" abierto: controles completos abajo, como la pantalla de Spotify */
-html.mobile body.rp-np .player-bar {
-  grid-template-columns: minmax(0, 1fr); height: auto; padding: 8px 16px 12px; background: var(--panel);
-  margin: 0; border-radius: 0;
-}
-html.mobile body.rp-np .bar-left { display: none; }
-html.mobile body.rp-np .bar-center { display: flex; flex-direction: column-reverse; gap: 6px; }
-html.mobile body.rp-np .bar-seek { position: static; height: auto; display: flex; }
-html.mobile body.rp-np .bar-seek > span { display: block; }
-html.mobile body.rp-np .bar-seek .slider-track { height: 4px; }
-html.mobile body.rp-np .bar-controls { justify-content: space-between; }
-html.mobile body.rp-np #btn-shuffle, html.mobile body.rp-np #btn-prev,
-html.mobile body.rp-np #btn-repeat { display: flex; }
-html.mobile body.rp-np .bar-play-btn { width: 56px; height: 56px; }
-
 /* ── Barra de abajo: Inicio, Buscar, Tu biblioteca, DJ ── */
 .m-nav { display: none; }
 html.mobile .m-nav {
@@ -188,10 +173,6 @@ html.mobile body.rp-np #rp-title::before { content: 'Reproduciendo desde'; lette
 html.mobile body.rp-np .np-cover { border-radius: 8px; }
 html.mobile body.rp-np .np-title { font-size: 22px; }
 html.mobile body.rp-np .np-artist { font-size: 16px; color: rgba(255,255,255,.7); }
-html.mobile body.rp-np .bar-play-btn { width: 68px !important; height: 68px !important; }
-html.mobile body.rp-np .bar-play-btn svg { width: 28px; height: 28px; }
-html.mobile body.rp-np .bar-controls .bar-btn svg { width: 26px; height: 26px; }
-html.mobile body.rp-np .bar-seek .slider-track { height: 3px; }
 
 /* Barra de abajo: íconos grandes y degradado a negro, sin fondo sólido */
 html.mobile .m-nav svg { width: 26px; height: 26px; }
@@ -202,6 +183,26 @@ html.mobile .topbar { grid-row: 1; }
 html.mobile .app-layout { grid-row: 2; }
 html.mobile .player-bar { grid-row: 3; }
 html.mobile .m-nav { grid-row: 4; }
-/* Controles repartidos a lo ancho, como Spotify */
-html.mobile body.rp-np .bar-center { width: 100%; }
-html.mobile body.rp-np .bar-controls { width: 100%; justify-content: space-between; padding: 0 4px; }
+
+/* ── Reproduciendo como Spotify: título → barra de tiempo (tiempos abajo) → botones → letra ── */
+html.mobile body.rp-np .player-bar { display: none; }
+html.mobile #rp-np .bar-center { display: flex; flex-direction: column-reverse; gap: 14px; margin: 4px 0 6px; }
+html.mobile #rp-np .bar-seek {
+  position: static; display: grid; grid-template-columns: 1fr 1fr; row-gap: 6px; height: auto; margin: 0;
+}
+html.mobile #rp-np .bar-seek .slider-track { grid-column: 1 / -1; grid-row: 1; height: 4px; }
+html.mobile #rp-np .bar-seek .slider-thumb { opacity: 1; }
+html.mobile #rp-np .bar-seek > span { display: block; grid-row: 2; font-size: 12px; text-align: left; min-width: 0; }
+html.mobile #rp-np .bar-seek > span:last-child { text-align: right; }
+html.mobile #rp-np .bar-controls { display: flex; width: 100%; justify-content: space-between; align-items: center; }
+html.mobile #rp-np .bar-controls .bar-btn { display: flex; width: 48px; height: 48px; }
+html.mobile #rp-np .bar-controls .bar-btn svg { width: 28px; height: 28px; }
+html.mobile #rp-np .bar-play-btn { width: 72px !important; height: 72px !important; background: #fff !important; color: #000 !important; border-radius: 50%; }
+html.mobile #rp-np .bar-play-btn svg { width: 30px !important; height: 30px !important; }
+/* Fila de abajo de los controles (en Spotify: dispositivos, compartir, cola) */
+.m-np-extra { display: flex; justify-content: space-between; margin: 6px 0 22px; }
+.m-np-extra .bar-btn { display: flex; width: 40px; height: 40px; color: rgba(255,255,255,.85); }
+.m-np-extra .bar-btn svg { width: 24px; height: 24px; }
+/* El visualizador no está en el Reproduciendo de Spotify */
+html.mobile #rp-np .spectrum { display: none; }
+html.mobile #rp-np .np-row { margin-bottom: 14px; }
