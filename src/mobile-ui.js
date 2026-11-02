@@ -98,6 +98,11 @@ function setupMobileUi() {
     if (e.target.closest('.like-btn, a, .link')) return
     if ($('right-panel').hidden || !body.classList.contains('rp-np')) $('btn-np').click()
   })
+  const showLyr = document.createElement('button')
+  showLyr.className = 'm-show-lyrics'
+  showLyr.textContent = 'Mostrar la letra'
+  $('np-lyrics').append(showLyr)
+
   // En el celular los paneles se cierran con la flecha hacia abajo (como Spotify)
   $('rp-close').innerHTML = icon(CHEVRON_DOWN)
 
@@ -118,21 +123,50 @@ function setupMobileUi() {
   const barRight = document.querySelector('.bar-right')
   const extra = document.createElement('div')
   extra.className = 'm-np-extra'
-  const moveControls = inNp => {
-    if (inNp && center.parentNode !== $('rp-np')) {
-      $('rp-np').querySelector('.np-row').after(center)
-      center.after(extra)
-      extra.append($('btn-lyrics'), $('btn-queue'))
-    } else if (!inNp && center.parentNode === $('rp-np')) {
+  // Letra a pantalla completa (como Spotify): flecha, título y artista arriba; barra de tiempo
+  // y play abajo. Va encima de "Reproduciendo".
+  const lyr = $('view-lyrics')
+  const lyrHead = document.createElement('div')
+  lyrHead.className = 'm-lyr-head'
+  lyrHead.innerHTML = `<button class="m-lyr-close">${icon(CHEVRON_DOWN)}</button><div><b></b><span></span></div>`
+  lyr.prepend(lyrHead)
+  const lyrFoot = document.createElement('div')
+  lyrFoot.className = 'm-lyr-foot m-host'
+  lyr.append(lyrFoot)
+  lyrHead.querySelector('.m-lyr-close').addEventListener('click', () => {
+    if (!$('btn-back').disabled) $('btn-back').click()
+    else window.navigate({ name: 'home' })
+  })
+  // El micrófono era el ícono de letra de escritorio: en el celular, uno de texto
+  $('btn-lyrics').innerHTML = icon('M3 18h12v-2H3v2zM3 6v2h18V6H3zm0 7h18v-2H3v2z')
+
+  // Los controles van donde se ven: letra > Reproduciendo > mini reproductor
+  const moveControls = where => {
+    if (where === 'lyrics') {
+      if (center.parentNode !== lyrFoot) { lyrFoot.append(center); extra.remove() }
+    } else if (where === 'np') {
+      if (center.parentNode !== $('rp-np')) {
+        $('rp-np').querySelector('.np-row').after(center)
+        center.after(extra)
+        extra.append($('btn-lyrics'), $('btn-queue'))
+      }
+    } else if (center.parentNode !== document.querySelector('.player-bar')) {
       document.querySelector('.bar-left').after(center)
       barRight.prepend($('btn-lyrics'), $('btn-queue'))
       extra.remove()
     }
   }
+  $('rp-np').classList.add('m-host')
   const sync = () => {
     const inNp = !$('right-panel').hidden && !$('rp-np').hidden
+    const inLyr = !lyr.hidden
     body.classList.toggle('rp-np', inNp)
-    moveControls(inNp)
+    body.classList.toggle('m-lyrics', inLyr)
+    if (inLyr) {
+      lyrHead.querySelector('b').textContent = $('np-title').textContent
+      lyrHead.querySelector('span').textContent = $('np-artist').textContent
+    }
+    moveControls(inLyr ? 'lyrics' : inNp ? 'np' : 'bar')
     markNav()
   }
   new MutationObserver(sync).observe(body, { subtree: true, attributes: true, attributeFilter: ['hidden'] })

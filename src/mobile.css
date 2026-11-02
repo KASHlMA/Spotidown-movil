@@ -186,19 +186,19 @@ html.mobile .m-nav { grid-row: 4; }
 
 /* ── Reproduciendo como Spotify: título → barra de tiempo (tiempos abajo) → botones → letra ── */
 html.mobile body.rp-np .player-bar { display: none; }
-html.mobile #rp-np .bar-center { display: flex; flex-direction: column-reverse; gap: 14px; margin: 4px 0 6px; }
-html.mobile #rp-np .bar-seek {
+html.mobile .m-host .bar-center { display: flex; flex-direction: column-reverse; gap: 14px; margin: 4px 0 6px; }
+html.mobile .m-host .bar-seek {
   position: static; display: grid; grid-template-columns: 1fr 1fr; row-gap: 6px; height: auto; margin: 0;
 }
-html.mobile #rp-np .bar-seek .slider-track { grid-column: 1 / -1; grid-row: 1; height: 4px; }
-html.mobile #rp-np .bar-seek .slider-thumb { opacity: 1; }
-html.mobile #rp-np .bar-seek > span { display: block; grid-row: 2; font-size: 12px; text-align: left; min-width: 0; }
-html.mobile #rp-np .bar-seek > span:last-child { text-align: right; }
-html.mobile #rp-np .bar-controls { display: flex; width: 100%; justify-content: space-between; align-items: center; }
-html.mobile #rp-np .bar-controls .bar-btn { display: flex; width: 48px; height: 48px; }
-html.mobile #rp-np .bar-controls .bar-btn svg { width: 28px; height: 28px; }
-html.mobile #rp-np .bar-play-btn { width: 72px !important; height: 72px !important; background: #fff !important; color: #000 !important; border-radius: 50%; }
-html.mobile #rp-np .bar-play-btn svg { width: 30px !important; height: 30px !important; }
+html.mobile .m-host .bar-seek .slider-track { grid-column: 1 / -1; grid-row: 1; height: 4px; }
+html.mobile .m-host .bar-seek .slider-thumb { opacity: 1; }
+html.mobile .m-host .bar-seek > span { display: block; grid-row: 2; font-size: 12px; text-align: left; min-width: 0; }
+html.mobile .m-host .bar-seek > span:last-child { text-align: right; }
+html.mobile .m-host .bar-controls { display: flex; width: 100%; justify-content: space-between; align-items: center; }
+html.mobile .m-host .bar-controls .bar-btn { display: flex; width: 48px; height: 48px; }
+html.mobile .m-host .bar-controls .bar-btn svg { width: 28px; height: 28px; }
+html.mobile .m-host .bar-play-btn { width: 72px !important; height: 72px !important; background: #fff !important; color: #000 !important; border-radius: 50%; }
+html.mobile .m-host .bar-play-btn svg { width: 30px !important; height: 30px !important; }
 /* Fila de abajo de los controles (en Spotify: dispositivos, compartir, cola) */
 .m-np-extra { display: flex; justify-content: space-between; margin: 6px 0 22px; }
 .m-np-extra .bar-btn { display: flex; width: 40px; height: 40px; color: rgba(255,255,255,.85); }
@@ -206,3 +206,43 @@ html.mobile #rp-np .bar-play-btn svg { width: 30px !important; height: 30px !imp
 /* El visualizador no está en el Reproduciendo de Spotify */
 html.mobile #rp-np .spectrum { display: none; }
 html.mobile #rp-np .np-row { margin-bottom: 14px; }
+
+/* ── Letra a pantalla completa como Spotify ── */
+.m-lyr-head, .m-lyr-foot { display: none; }
+html.mobile body.m-lyrics #view-lyrics {
+  position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+}
+html.mobile body.m-lyrics .m-lyr-head {
+  display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; padding: 8px 8px 4px; flex-shrink: 0;
+}
+.m-lyr-head > div { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.m-lyr-head b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.m-lyr-head span { font-size: 13px; color: rgba(255,255,255,.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.m-lyr-close { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: #fff; }
+.m-lyr-close svg { width: 30px; height: 30px; }
+html.mobile body.m-lyrics #lyrics-scroll { flex: 1; min-height: 0; }
+html.mobile .lyrics-inner { padding: 12px 24px 40vh; }
+html.mobile .lyric-line { font-size: 22px; line-height: 1.35; padding: 7px 0; color: rgba(255,255,255,.55); }
+html.mobile .lyric-line.past { color: rgba(255,255,255,.55); }
+html.mobile .lyric-line.cur { color: #fff; }
+html.mobile .no-lyrics { font-size: 22px; padding-top: 10vh; }
+html.mobile body.m-lyrics .m-lyr-foot { display: block; padding: 8px 24px calc(20px + env(safe-area-inset-bottom)); flex-shrink: 0; }
+/* En la letra sólo la barra de tiempo y el play (como Spotify) */
+.m-lyr-foot #btn-shuffle, .m-lyr-foot #btn-prev, .m-lyr-foot #btn-next, .m-lyr-foot #btn-repeat { display: none !important; }
+.m-lyr-foot .bar-controls { justify-content: center !important; }
+
+/* Tarjeta de la letra: líneas completas (sin "…") y el botón "Mostrar la letra" */
+html.mobile .np-lyrics-text { font-size: 20px; color: rgba(255,255,255,.75); }
+html.mobile .np-lyrics-text div { white-space: normal; overflow: visible; margin-bottom: 8px; }
+.m-show-lyrics { display: none; }
+html.mobile .m-show-lyrics {
+  display: inline-block; margin-top: 10px; height: 36px; padding: 0 18px; border-radius: 18px;
+  background: #fff; color: #000; font-size: 14px; font-weight: 700;
+}
+/* En Reproduciendo van todos los botones (la regla del mini reproductor los escondía) */
+html.mobile #rp-np #btn-shuffle, html.mobile #rp-np #btn-prev,
+html.mobile #rp-np #btn-next, html.mobile #rp-np #btn-repeat { display: flex; }
+/* Letra más legible, como Spotify */
+html.mobile .lyric-line, html.mobile .lyric-line.past { color: rgba(255,255,255,.78); }
+html.mobile .lyric-line.cur { color: #fff; }
