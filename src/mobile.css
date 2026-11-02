@@ -1,0 +1,92 @@
+/* Spotidown en el celular: la misma interfaz de escritorio acomodada para pantalla vertical,
+   parecida a la app de Spotify. Sólo aplica con html.mobile (lo pone build.mjs). */
+
+html.mobile body {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  padding-top: env(safe-area-inset-top);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Arriba: logo, atrás y búsqueda ── */
+html.mobile .topbar {
+  grid-template-columns: auto minmax(0, 1fr); gap: 8px; padding: 8px 12px; height: auto;
+  -webkit-app-region: no-drag;
+}
+html.mobile .win-btns, html.mobile #btn-fwd, html.mobile .tb-home { display: none !important; }
+html.mobile .app-logo { margin-right: 0; }
+html.mobile .app-logo svg { width: 30px; height: 30px; }
+html.mobile .tb-center { min-width: 0; }
+html.mobile .tb-search { height: 44px; width: 100%; }
+html.mobile .tb-search input { font-size: 16px; }   /* 16px: Android no hace zoom al escribir */
+
+/* ── En medio: una sola columna; la biblioteca y los paneles van a pantalla completa ── */
+html.mobile .app-layout { grid-template-columns: minmax(0, 1fr); padding: 0; gap: 0; position: relative; }
+html.mobile .panel { border-radius: 0; }
+html.mobile .sidebar { display: none; }
+html.mobile body.show-lib .sidebar {
+  display: flex; position: absolute; inset: 0; z-index: 20; width: auto;
+}
+html.mobile body.show-lib .sidebar .sb-header span,
+html.mobile body.show-lib .sidebar .sb-chips,
+html.mobile body.show-lib .sidebar .lib-text,
+html.mobile body.show-lib .sidebar .lib-status { display: revert !important; }
+html.mobile .rightpanel {
+  position: absolute !important; inset: 0 !important; width: auto !important; z-index: 30;
+  box-shadow: none !important;
+}
+html.mobile .rp-body { padding: 0 16px 16px; }
+html.mobile .view, html.mobile .scroller { -webkit-overflow-scrolling: touch; }
+html.mobile ::-webkit-scrollbar { width: 0; height: 0; }
+
+/* Botones más grandes para el dedo */
+html.mobile .tr { height: 60px; }
+html.mobile .bar-btn { width: 40px; height: 40px; }
+
+/* ── Abajo: mini reproductor (como Spotify) ── */
+html.mobile .player-bar {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+  height: 64px; margin: 0 8px; padding: 0 8px; border-radius: 8px; background: #2a1517; position: relative;
+}
+html.mobile .bar-left { min-width: 0; }
+html.mobile .bar-left .like-btn { display: none; }
+html.mobile .bar-center { display: contents; }
+html.mobile .bar-controls { gap: 0; }
+html.mobile #btn-shuffle, html.mobile #btn-prev, html.mobile #btn-repeat { display: none; }
+html.mobile .bar-seek {
+  position: absolute; left: 8px; right: 8px; bottom: 0; height: 2px; margin: 0;
+}
+html.mobile .bar-seek > span { display: none; }
+html.mobile .bar-seek .slider-track { height: 2px; }
+html.mobile .bar-right { display: none; }
+
+/* "Reproduciendo" abierto: controles completos abajo, como la pantalla de Spotify */
+html.mobile body.rp-np .player-bar {
+  grid-template-columns: minmax(0, 1fr); height: auto; padding: 8px 16px 12px; background: var(--panel);
+  margin: 0; border-radius: 0;
+}
+html.mobile body.rp-np .bar-left { display: none; }
+html.mobile body.rp-np .bar-center { display: flex; flex-direction: column-reverse; gap: 6px; }
+html.mobile body.rp-np .bar-seek { position: static; height: auto; display: flex; }
+html.mobile body.rp-np .bar-seek > span { display: block; }
+html.mobile body.rp-np .bar-seek .slider-track { height: 4px; }
+html.mobile body.rp-np .bar-controls { justify-content: space-between; }
+html.mobile body.rp-np #btn-shuffle, html.mobile body.rp-np #btn-prev,
+html.mobile body.rp-np #btn-repeat { display: flex; }
+html.mobile body.rp-np .bar-play-btn { width: 56px; height: 56px; }
+
+/* ── Barra de abajo: Inicio, Buscar, Tu biblioteca, DJ ── */
+.m-nav { display: none; }
+html.mobile .m-nav {
+  display: grid; grid-template-columns: repeat(4, 1fr); height: 60px;
+  padding-bottom: env(safe-area-inset-bottom); background: linear-gradient(transparent, #000 40%);
+}
+html.mobile body.rp-np .m-nav { display: none; }
+.m-nav button {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font-size: 11px; color: var(--t2);
+}
+.m-nav button.on { color: var(--white); }
+.m-nav svg { width: 24px; height: 24px; }
+
+/* Ajustes y ventanas: a lo ancho */
+html.mobile .modal { max-width: none; margin: 0 8px; }

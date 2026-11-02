@@ -1,0 +1,8 @@
+{
+  "appId": "com.kashima.spotidown",
+  "appName": "Spotidown",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#000000"
+  }
+}
