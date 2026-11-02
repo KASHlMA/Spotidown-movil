@@ -140,3 +140,68 @@ html.mobile .tile { height: 56px; }
 html.mobile .tile-img { width: 56px; height: 56px; }
 html.mobile .tile-name { padding: 0 8px 0 10px; font-size: 13px; }
 html.mobile .tile .card-play, html.mobile .tile button { display: none; }
+
+/* ── Acomodo tomado de la app de Spotify (capturas del celular) ── */
+/* Arriba: logo (en Spotify tu foto) + título de la pestaña; en Inicio, los filtros */
+html.mobile .topbar { grid-template-columns: auto minmax(0, 1fr) !important; padding: 10px 16px 6px; }
+html.mobile .tb-left { gap: 12px; }
+html.mobile #btn-back { display: none; }
+.m-head { display: none; }
+html.mobile .m-head { display: flex; align-items: center; gap: 12px; min-width: 0; overflow: hidden; }
+html.mobile .m-title { font-size: 24px; font-weight: 700; letter-spacing: -.3px; white-space: nowrap; }
+html.mobile .m-title:empty { display: none; }
+html.mobile .m-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+html.mobile .m-chips .chip { height: 32px; padding: 0 14px; font-size: 14px; white-space: nowrap; flex-shrink: 0; }
+html.mobile body:not([data-tab="home"]) .m-chips { display: none; }
+html.mobile body[data-tab="search"] .tb-center { display: flex !important; grid-column: 1 / -1; margin-top: 10px; }
+html.mobile body[data-tab="search"] .tb-search { height: 48px; border-radius: 4px; }
+
+/* Inicio: sin el saludo grande ni el fondo de color */
+html.mobile #home-greeting, html.mobile .home-bg { display: none; }
+html.mobile .home-content { padding: 6px 16px 24px; }
+html.mobile .shelf-head h2 { font-size: 21px; }
+
+/* Tu biblioteca: el título va arriba; aquí quedan los filtros, el engrane y filas grandes */
+html.mobile body.show-lib .sidebar .sb-header > svg,
+html.mobile body.show-lib .sidebar .sb-header > span { display: none !important; }
+html.mobile body.show-lib .sidebar .sb-header { justify-content: flex-end; padding: 4px 16px 0; min-height: 0; }
+html.mobile body.show-lib .sidebar { flex-direction: column; }
+html.mobile body.show-lib .sidebar .sb-chips { order: -1; padding: 6px 16px 10px; }
+html.mobile .lib-list li { padding: 8px 16px; gap: 14px; }
+html.mobile .lib-thumb { width: 64px; height: 64px; }
+html.mobile .lib-name { font-size: 16px; }
+html.mobile .lib-sub { font-size: 13px; }
+
+/* Mini reproductor: play sin círculo, el corazón a la mano y sin "siguiente" */
+html.mobile body:not(.rp-np) .bar-play-btn { background: none !important; color: #fff !important; width: 44px; height: 44px; }
+html.mobile body:not(.rp-np) .bar-play-btn svg { width: 26px; height: 26px; }
+html.mobile body:not(.rp-np) #btn-next { display: none; }
+html.mobile .bar-left .like-btn:not([hidden]) { display: flex; margin-left: auto; }
+html.mobile .bar-thumb { width: 44px; height: 44px; border-radius: 4px; }
+html.mobile .bar-title { font-size: 14px; font-weight: 700; }
+html.mobile .bar-artist { font-size: 13px; color: rgba(255,255,255,.75); }
+html.mobile .player-bar { border-radius: 6px; height: 60px; }
+
+/* Reproduciendo: "Reproduciendo desde" chico y el nombre en negritas; título grande */
+html.mobile body.rp-np #rp-title { font-size: 13px; }
+html.mobile body.rp-np #rp-title::before { content: 'Reproduciendo desde'; letter-spacing: 0; font-size: 12px; font-weight: 400; text-transform: none; }
+html.mobile body.rp-np .np-cover { border-radius: 8px; }
+html.mobile body.rp-np .np-title { font-size: 22px; }
+html.mobile body.rp-np .np-artist { font-size: 16px; color: rgba(255,255,255,.7); }
+html.mobile body.rp-np .bar-play-btn { width: 68px !important; height: 68px !important; }
+html.mobile body.rp-np .bar-play-btn svg { width: 28px; height: 28px; }
+html.mobile body.rp-np .bar-controls .bar-btn svg { width: 26px; height: 26px; }
+html.mobile body.rp-np .bar-seek .slider-track { height: 3px; }
+
+/* Barra de abajo: íconos grandes y degradado a negro, sin fondo sólido */
+html.mobile .m-nav svg { width: 26px; height: 26px; }
+html.mobile .m-nav { background: linear-gradient(rgba(0,0,0,.2), #000 55%); }
+/* Cada parte en su renglón: al esconder la barra de arriba (Reproduciendo) las demás se
+   recorrían y los controles quedaban fuera de la pantalla */
+html.mobile .topbar { grid-row: 1; }
+html.mobile .app-layout { grid-row: 2; }
+html.mobile .player-bar { grid-row: 3; }
+html.mobile .m-nav { grid-row: 4; }
+/* Controles repartidos a lo ancho, como Spotify */
+html.mobile body.rp-np .bar-center { width: 100%; }
+html.mobile body.rp-np .bar-controls { width: 100%; justify-content: space-between; padding: 0 4px; }

@@ -23,6 +23,23 @@ function setupMobileUi() {
   ].map(([k, label, d]) => `<button data-k="${k}">${icon(d)}<span>${label}</span></button>`).join('')
   body.appendChild(nav)
 
+  // ── Arriba, como Spotify: logo + título de la pestaña, y en Inicio los filtros ──
+  const head = document.createElement('div')
+  head.className = 'm-head'
+  head.innerHTML = '<span class="m-title"></span><div class="m-chips">' +
+    [['all', 'Todo'], ['genre', 'Géneros'], ['artist', 'Artistas'], ['album', 'Álbumes']]
+      .map(([f, label]) => `<button class="chip" data-f="${f}">${label}</button>`).join('') + '</div>'
+  document.querySelector('.tb-left').after(head)
+  // Los filtros abren Tu biblioteca con ese filtro
+  head.querySelector('.m-chips').addEventListener('click', e => {
+    const f = e.target.closest('[data-f]')?.dataset.f
+    if (!f) return
+    setTab('lib')
+    document.querySelector(`.sb-chips [data-filter="${f}"]`)?.click()
+    markNav()
+  })
+  const TITLES = { home: '', search: 'Buscar', lib: 'Tu biblioteca' }
+
   // ── Buscar: "Explorar todo" con tarjetas de géneros y moods ──
   const browse = document.createElement('section')
   browse.className = 'm-browse'
@@ -57,6 +74,7 @@ function setupMobileUi() {
     if (k === 'dj') { body.classList.remove('show-lib'); if ($('right-panel').hidden || $('rp-dj').hidden) $('btn-dj').click(); return }
     closePanels()
     body.dataset.tab = k
+    head.querySelector('.m-title').textContent = TITLES[k]
     browse.hidden = true
     if (k === 'home') $('btn-home').click()
     if (k === 'lib') body.classList.add('show-lib')
