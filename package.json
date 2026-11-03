@@ -7,7 +7,8 @@
     "build": "node build.mjs",
     "sync": "node build.mjs && npx cap sync android",
     "apk": "node build.mjs && npx cap sync android && cd android && gradlew.bat assembleDebug",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "nuevas": "node tools/analizar-nuevas.mjs"
   },
   "dependencies": {
     "@capacitor-community/speech-recognition": "^6.0.1",

@@ -655,6 +655,28 @@ function setupCanvas() {
   }).observe(panel, { attributes: true, attributeFilter: ['class', 'hidden'] })
 }
 
+// ── Carátulas en HD donde se ven grandes (Reproduciendo y la portada de un álbum) ──
+// Las listas siguen con la de 400 px; aquí se cambia por la grande cuando ya cargó (sin parpadeo)
+function setupHdCovers() {
+  const swap = async (box, song) => {
+    const img = box.querySelector('img')
+    if (!img || !song?.cover || img.dataset.hd) return
+    img.dataset.hd = '1'
+    const url = await window.api.hdCover?.(song)
+    if (!url || !box.contains(img)) return
+    const pre = new Image()
+    pre.onload = () => { if (box.contains(img)) img.src = url }
+    pre.src = url
+  }
+  const np = $('np-cover'), col = $('col-cover')
+  new MutationObserver(() => swap(np, window.sd.currentSong)).observe(np, { childList: true })
+  new MutationObserver(() => {
+    if (col.classList.contains('round') || col.classList.contains('mosaic')) return   // (artista: foto; playlist: mosaico)
+    const src = col.querySelector('img')?.src
+    swap(col, src && window.sd.allSongs.find(s => s.cover === src))
+  }).observe(col, { childList: true })
+}
+
 // ── Animaciones suaves y rápidas (como Spotify) ──
 // Abrir Reproduciendo / la fila sube desde abajo (CSS); cerrarlo baja antes de esconderse
 function setupAnimations() {
@@ -801,7 +823,7 @@ function setupCollection() {
 }
 
 export function setupMobileUiWhenReady() {
-  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); setupCollection(); closeOverlaysOnLink(); setupCanvas(); setupGestures(); setupAnimations(); hideSplash() }
+  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); setupCollection(); closeOverlaysOnLink(); setupCanvas(); setupGestures(); setupAnimations(); setupHdCovers(); hideSplash() }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
   go()
 }

@@ -14,6 +14,7 @@ import { createGemini, weatherFor } from './gemini-web.js'
 import { getJson, toBase64 } from './store.js'
 import { ytVideos } from './youtube-web.js'
 import { songKey } from './song-key.mjs'
+import { hdCover } from './covers-hd.js'
 import { setupMobileUiWhenReady, goBack } from './mobile-ui.js'
 
 // Volumen de la música siempre al 100 % (el original): el volumen lo ponen los botones del celular.
@@ -226,6 +227,8 @@ window.api = {
     if (fastFiles) { fastFiles = false; checkLater(); return snapFiles(snap) }
     return (await scanOnce()).map(s => ({ path: s.path, mtime: s.mtime }))
   },
+  // Carátula grande para Reproduciendo y las portadas (covers-hd.js)
+  hdCover: song => hdCover(Music, song, window.api.fileUrl),
   readMeta: async path => {
     const m = await Music.readMeta({ path })
     if (m.cover) m.cover = window.api.fileUrl(m.cover)

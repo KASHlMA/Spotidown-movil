@@ -68,6 +68,67 @@ public class MusicPlugin extends Plugin {
             return f.getAbsolutePath();
         } catch (Exception e) { return null; }
     }
+    // Carátula grande (hasta 1200 px) para Reproduciendo y las portadas grandes: la de 400 px se veía
+    // borrosa ahí. Se hace la primera vez que se ve. Con "url", se baja de internet (una en HD cuando la
+    // que trae el archivo es chica). Regresa { cover, w, h } o null si no hay.
+    private File hdFile(String path, long mtime) {
+        File d = new File(getContext().getFilesDir(), "covers-hd");
+        if (!d.exists()) d.mkdirs();
+        return new File(d, coverFile(path, mtime).getName());
+    }
+    private static JSObject saveHd(Bitmap bmp, File f) throws Exception {
+        if (bmp.getWidth() > 1200) bmp = Bitmap.createScaledBitmap(bmp, 1200, Math.round(1200f * bmp.getHeight() / bmp.getWidth()), true);
+        try (FileOutputStream out = new FileOutputStream(f)) { bmp.compress(Bitmap.CompressFormat.JPEG, 90, out); }
+        JSObject r = new JSObject();
+        r.put("cover", f.getAbsolutePath());
+        r.put("w", bmp.getWidth());
+        r.put("h", bmp.getHeight());
+        return r;
+    }
+
+    @PluginMethod
+    public void hdCover(PluginCall call) {
+        String path = call.getString("path");
+        String url = call.getString("url");
+        long mtime = new File(path).lastModified() / 1000 * 1000;
+        new Thread(() -> {
+            File f = hdFile(path, mtime);
+            try {
+                if (url != null) {
+                    java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+                    c.setConnectTimeout(10000);
+                    c.setReadTimeout(15000);
+                    Bitmap bmp = BitmapFactory.decodeStream(c.getInputStream());
+                    if (bmp == null) { call.resolve(new JSObject()); return; }
+                    JSObject r = saveHd(bmp, f);
+                    r.put("online", true);
+                    call.resolve(r);
+                    return;
+                }
+                if (f.exists()) {
+                    BitmapFactory.Options o = new BitmapFactory.Options();
+                    o.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(f.getAbsolutePath(), o);
+                    JSObject r = new JSObject();
+                    r.put("cover", f.getAbsolutePath());
+                    r.put("w", o.outWidth);
+                    r.put("h", o.outHeight);
+                    call.resolve(r);
+                    return;
+                }
+                MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                try {
+                    mmr.setDataSource(path);
+                    byte[] pic = mmr.getEmbeddedPicture();
+                    Bitmap bmp = pic == null ? null : BitmapFactory.decodeByteArray(pic, 0, pic.length);
+                    call.resolve(bmp == null ? new JSObject() : saveHd(bmp, f));
+                } finally { try { mmr.release(); } catch (Exception ignored) {} }
+            } catch (Exception e) {
+                call.resolve(new JSObject());
+            }
+        }).start();
+    }
+
     private static volatile boolean pregenRunning = false;
     private void pregenCovers(JSArray songs) {
         if (pregenRunning) return;

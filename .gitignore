@@ -1,2 +1,4 @@
 node_modules/
 www/
+# Análisis de tus canciones (datos personales)
+audio-extra.json

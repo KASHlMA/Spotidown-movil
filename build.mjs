@@ -58,6 +58,8 @@ try {
     features[songKey(m.title, m.artist)] = { styles: d.styles, moods: d.moods, emb: d.emb, lyr: d.lyr }
   }
 } catch (e) { console.warn('Sin análisis de audio de la compu:', e.message) }
+// Las que sólo están en el celular (tools/analizar-nuevas.mjs)
+try { Object.assign(features, JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'audio-extra.json'), 'utf8'))) } catch {}
 fs.writeFileSync(path.join(WWW, 'audio-features.json'), JSON.stringify(features))
 console.log('análisis de audio:', Object.keys(features).length, 'canciones')
 
