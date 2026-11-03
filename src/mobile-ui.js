@@ -20,7 +20,8 @@ function setupMobileUi() {
     ['home', 'Inicio', 'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z'],
     ['search', 'Buscar', 'M10.5 3a7.5 7.5 0 0 1 5.96 12.05l4.25 4.24-1.42 1.42-4.24-4.25A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z'],
     ['lib', 'Tu biblioteca', 'M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 5h-3v5.5a2.5 2.5 0 0 1-5 0 2.5 2.5 0 0 1 2.5-2.5c.57 0 1.08.19 1.5.51V5h4v2zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z'],
-    ['dj', 'DJ Nat', 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zm0 4a5 5 0 1 1 0 10 5 5 0 0 1 0-10z'],
+    // Ajustes en lugar del DJ (el DJ tiene su botón en Reproduciendo y su tarjeta en Inicio)
+    ['settings', 'Ajustes', 'M19.14 12.94a7.07 7.07 0 0 0 .05-.94 7.07 7.07 0 0 0-.05-.94l2.03-1.58a.49.49 0 0 0 .12-.62l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54A.48.48 0 0 0 13.92 2h-3.84a.48.48 0 0 0-.48.41l-.36 2.54a7.37 7.37 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.72 8.47a.48.48 0 0 0 .12.62l2.03 1.58a7.07 7.07 0 0 0 0 1.88l-2.03 1.58a.49.49 0 0 0-.12.62l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.7 1.62.94l.36 2.54c.05.24.25.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.37 7.37 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.62l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z'],
   ].map(([k, label, d]) => `<button data-k="${k}">${icon(d)}<span>${label}</span></button>`).join('')
   body.appendChild(nav)
 
@@ -72,7 +73,7 @@ function setupMobileUi() {
     if (!$('right-panel').hidden) $('rp-close').click()
   }
   const setTab = k => {
-    if (k === 'dj') { body.classList.remove('show-lib'); if ($('right-panel').hidden || $('rp-dj').hidden) $('btn-dj').click(); return }
+    if (k === 'settings') { window.openSettings?.(); return }
     closePanels()
     body.dataset.tab = k
     head.querySelector('.m-title').textContent = TITLES[k]
@@ -116,7 +117,7 @@ function setupMobileUi() {
   // Qué panel está abierto (para el acomodo y la barra de abajo)
   const markNav = () => {
     const dj = !$('right-panel').hidden && !$('rp-dj').hidden
-    for (const b of nav.children) b.classList.toggle('on', b.dataset.k === 'dj' ? dj : !dj && b.dataset.k === body.dataset.tab)
+    for (const b of nav.children) b.classList.toggle('on', !dj && b.dataset.k === body.dataset.tab)
   }
   // En "Reproduciendo" los controles van dentro de la pantalla, justo debajo del título (como
   // Spotify: título → barra de tiempo → botones → letra), y al cerrar regresan a la barra
@@ -418,8 +419,11 @@ const MOOD_PHRASE = { 'm-triste': 'tristes pa la noche', 'm-bailar': 'para baila
 function setupDj() {
   const sd = window.sd, body = document.body
   // El panel del DJ (con el texto) no se usa en el celular: se va a Reproduciendo
+  // Tocar la tarjeta DJ Nat de Inicio lo prende (sólo se activa cuando lo pides)
   new MutationObserver(() => {
-    if (!$('right-panel').hidden && !$('rp-dj').hidden) $('btn-np').click()
+    if ($('right-panel').hidden || $('rp-dj').hidden) return
+    $('btn-np').click()
+    if (!sd.dj.on) sd.djStart()
   }).observe($('rp-dj'), { attributes: true, attributeFilter: ['hidden'] })
 
   // Mientras habla: el orbe grande en lugar de la carátula y "A continuación / DJ Nat"
@@ -539,15 +543,6 @@ function setupDj() {
   }
   function closeSheet() { sheet.hidden = true; input.blur() }
   window.__closeDjSheet = () => { if (sheet.hidden) return false; closeSheet(); return true }
-
-  // La pestaña DJ Nat: si no está prendido lo prende; luego Reproduciendo (o la hoja)
-  document.querySelector('.m-nav').addEventListener('click', e => {
-    if (e.target.closest('button')?.dataset.k !== 'dj') return
-    e.stopImmediatePropagation()
-    if (!sd.dj.on) { sd.djStart(); return }
-    if ($('right-panel').hidden || $('rp-np').hidden) $('btn-np').click()
-    else openSheet()
-  }, true)
 }
 
 // Regresar, como el "atrás" de Android: cierra lo que esté encima o va a la pantalla anterior

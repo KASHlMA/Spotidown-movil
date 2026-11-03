@@ -468,3 +468,5 @@ html.mobile #rp-np .np-row { margin: 18px 0 16px; }
 html.mobile .m-host .bar-center { gap: 20px; margin: 8px 0 4px; }
 html.mobile body.m-dj-talk #rp-np .np-row { margin-top: 18px; }
 .m-dj-mic.send { background: var(--accent); color: #fff; }
+/* El botón del DJ siempre está en Reproduciendo (con cualquier canción) */
+html.mobile body.rp-np .m-dj-btn { display: flex; width: 44px; height: 44px; border-radius: 50%; align-items: center; justify-content: center; background: rgba(255,255,255,.12); }
