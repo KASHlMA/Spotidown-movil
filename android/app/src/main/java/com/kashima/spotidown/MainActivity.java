@@ -2,6 +2,7 @@ package com.kashima.spotidown;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -9,6 +10,8 @@ import android.webkit.MimeTypeMap;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
+
+import androidx.core.splashscreen.SplashScreen;
 
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
@@ -20,14 +23,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends BridgeActivity {
+    private volatile boolean painted = false;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // El logo de Android se queda hasta que la página ya pintó su pantalla de carga (máx. 3 s);
+        // antes se alcanzaba a ver un cuadro vacío entre los dos
+        SplashScreen splash = SplashScreen.installSplashScreen(this);
+        splash.setKeepOnScreenCondition(() -> !painted);
+        splash.setOnExitAnimationListener(v -> v.remove());   // sin desvanecerse: abajo ya está el mismo logo
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> painted = true, 3000);
         registerPlugin(MusicPlugin.class);   // tu música del celular (MusicPlugin.java)
         super.onCreate(savedInstanceState);
         // Android 13+: los controles de la notificación necesitan este permiso
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[] { Manifest.permission.POST_NOTIFICATIONS }, 1);
         WebView web = getBridge().getWebView();
+        // Mismo gris que la pantalla de carga (si no, entre el logo de Android y la página se ve un cuadro negro)
+        web.setBackgroundColor(Color.parseColor("#202020"));
         // La música empieza a sonar sin tener que tocar dos veces
         web.getSettings().setMediaPlaybackRequiresUserGesture(false);
         // Los archivos de música se sirven en /_music_/<ruta>, con los encabezados de "Range"
@@ -39,6 +52,12 @@ public class MainActivity extends BridgeActivity {
                 String p = url.getPath();
                 if (p != null && p.startsWith("/_music_/")) return serveMusic(p.substring("/_music_".length()), request);
                 return super.shouldInterceptRequest(view, request);
+            }
+            @Override
+            public void onPageCommitVisible(WebView view, String url) {
+                super.onPageCommitVisible(view, url);
+                // Un momento más para que el logo de la página ya esté pintado
+                view.postDelayed(() -> painted = true, 150);
             }
         });
     }

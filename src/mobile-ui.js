@@ -587,8 +587,29 @@ export function goBack() {
   return false   // ya no hay a dónde regresar: la app se va a segundo plano (sigue sonando)
 }
 
+// Quita la pantalla de carga cuando ya salieron tus canciones y las carátulas que se ven
+// (éstas máximo 1 s más; todo máximo 4 s, por si algo falla)
+function hideSplash() {
+  const t0 = performance.now()
+  let songsAt = 0
+  const coversReady = () => [...document.querySelectorAll('#home-tiles img, .shelf-row img')]
+    .filter(i => i.getBoundingClientRect().top < innerHeight).every(i => i.complete)
+  const check = () => {
+    const now = performance.now()
+    if (!songsAt && window.sd?.allSongs?.length) songsAt = now
+    if ((songsAt && (coversReady() || now - songsAt > 1000)) || now - t0 > 4000) {
+      // Dos cuadros más para que el inicio ya esté pintado debajo
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.documentElement.classList.add('m-ready')
+        setTimeout(() => document.getElementById('m-splash')?.remove(), 400)
+      }))
+    } else requestAnimationFrame(check)
+  }
+  check()
+}
+
 export function setupMobileUiWhenReady() {
-  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout() }
+  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); hideSplash() }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
   go()
 }
