@@ -31,8 +31,16 @@ try {
   for (const [p, d] of Object.entries(audio)) if (meta[p] && !d.error) known.add(songKey(meta[p].title, meta[p].artist))
 } catch {}
 
-// Las canciones del celular (la lista que guarda la app)
-const phone = JSON.parse(execFileSync('adb', ['exec-out', 'run-as', 'com.kashima.spotidown', 'cat', 'files/music-cache.json'], { maxBuffer: 64 << 20 }).toString()).songs
+// Las canciones del celular, directo de Android (la lista que guarda la app no siempre trae
+// las recién descargadas); sin grabaciones de llamadas, igual que la app
+const phone = {}
+const rows = execFileSync('adb', ['shell', 'content query --uri content://media/external/audio/media --projection _data:title:artist:is_music'],
+  { maxBuffer: 64 << 20 }).toString().split(/\r?\n/)
+for (const row of rows) {
+  const m = /_data=(.*), title=(.*), artist=(.*), is_music=(\d+)$/.exec(row)
+  if (!m || m[4] === '0' || /\/(PhoneRecord|CallRecord|Call ?Recordings?|Recordings\/Call)\//i.test(m[1])) continue
+  phone[m[1]] = { title: m[2], artist: m[3] === '<unknown>' ? '' : m[3] }
+}
 const todo = Object.entries(phone).filter(([, c]) => !known.has(songKey(c.title, c.artist)))
 console.log(`En el celular: ${Object.keys(phone).length} · sin análisis: ${todo.length}`)
 if (!todo.length) process.exit(0)
