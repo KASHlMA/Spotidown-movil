@@ -470,3 +470,13 @@ html.mobile body.m-dj-talk #rp-np .np-row { margin-top: 18px; }
 .m-dj-mic.send { background: var(--accent); color: #fff; }
 /* El botón del DJ siempre está en Reproduciendo (con cualquier canción) */
 html.mobile body.rp-np .m-dj-btn { display: flex; width: 44px; height: 44px; border-radius: 50%; align-items: center; justify-content: center; background: rgba(255,255,255,.12); }
+
+/* Álbumes y playlists: un solo degradado del color de la portada hacia el fondo (antes el de
+   arriba se oscurecía y abajo volvía a empezar el color: se veía un corte) */
+html.mobile .col-hero, html.mobile .col-body { background: transparent !important; }
+html.mobile #col-scroll {
+  background: linear-gradient(var(--hero) 0px,
+    color-mix(in srgb, var(--hero) 55%, var(--panel)) 280px,
+    color-mix(in srgb, var(--hero) 20%, var(--panel)) 480px,
+    var(--panel) 680px);
+}
