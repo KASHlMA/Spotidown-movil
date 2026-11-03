@@ -28,19 +28,20 @@ function setupMobileUi() {
   // ── Arriba, como Spotify: logo + título de la pestaña, y en Inicio los filtros ──
   const head = document.createElement('div')
   head.className = 'm-head'
-  head.innerHTML = '<span class="m-title"></span><div class="m-chips">' +
-    [['all', 'Todo'], ['genre', 'Géneros'], ['artist', 'Artistas'], ['album', 'Álbumes']]
-      .map(([f, label]) => `<button class="chip" data-f="${f}">${label}</button>`).join('') + '</div>'
+  head.innerHTML = '<span class="m-title"></span>'
   document.querySelector('.tb-left').after(head)
-  // Los filtros abren Tu biblioteca con ese filtro
-  head.querySelector('.m-chips').addEventListener('click', e => {
-    const f = e.target.closest('[data-f]')?.dataset.f
-    if (!f) return
-    setTab('lib')
-    document.querySelector(`.sb-chips [data-filter="${f}"]`)?.click()
-    markNav()
-  })
-  const TITLES = { home: '', search: 'Buscar', lib: 'Tu biblioteca' }
+  // En Inicio, el saludo con tu nombre (como Spotify): Buenos días / tardes / noches, Kashima
+  const greet = () => {
+    const h = new Date().getHours()
+    const g = h >= 6 && h < 12 ? 'Buenos días' : h >= 12 && h < 19 ? 'Buenas tardes' : 'Buenas noches'
+    let n = ''
+    try { n = JSON.parse(localStorage.getItem('sd.userName') || '""') } catch {}
+    return n ? g + ', ' + n : g
+  }
+  const TITLES = { home: greet, search: 'Buscar', lib: 'Tu biblioteca' }
+  const title = k => typeof TITLES[k] === 'function' ? TITLES[k]() : TITLES[k] || ''
+  setInterval(() => { if (body.dataset.tab === 'home') head.querySelector('.m-title').textContent = title('home') }, 60000)
+  head.querySelector('.m-title').textContent = title(body.dataset.tab)
 
   // ── Buscar: "Explorar todo" con tarjetas de géneros y moods ──
   const browse = document.createElement('section')
@@ -76,7 +77,7 @@ function setupMobileUi() {
     if (k === 'settings') { window.openSettings?.(); return }
     closePanels()
     body.dataset.tab = k
-    head.querySelector('.m-title').textContent = TITLES[k]
+    head.querySelector('.m-title').textContent = title(k)
     browse.hidden = true
     if (k === 'home') $('btn-home').click()
     if (k === 'lib') body.classList.add('show-lib')
@@ -449,6 +450,7 @@ function setupDj() {
     if (barDjSub.textContent !== sub) barDjSub.textContent = sub
     const d = sd.dj, ctxDj = sd.playContext?.key === 'dj:'
     body.classList.toggle('m-djmode', d.on && (ctxDj || d.speaking || d.thinking))
+    body.classList.toggle('m-dj-on', !!d.on)   // (el orbe sólo se anima con el DJ prendido)
     const t = d.on && (d.speaking || d.thinking)
     if (t !== talking) {
       talking = t

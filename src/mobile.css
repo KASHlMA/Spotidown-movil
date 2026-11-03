@@ -133,9 +133,8 @@ html.mobile #btn-back { display: none; }
 html.mobile .m-head { display: flex; align-items: center; gap: 12px; min-width: 0; overflow: hidden; }
 html.mobile .m-title { font-size: 24px; font-weight: 700; letter-spacing: -.3px; white-space: nowrap; }
 html.mobile .m-title:empty { display: none; }
-html.mobile .m-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-html.mobile .m-chips .chip { height: 32px; padding: 0 14px; font-size: 14px; white-space: nowrap; flex-shrink: 0; }
-html.mobile body:not([data-tab="home"]) .m-chips { display: none; }
+/* Sin el botón de ajustes de Last.fm en Tu biblioteca (Ajustes ya está abajo) */
+html.mobile #btn-settings, html.mobile body.show-lib .sidebar .sb-header { display: none !important; }
 html.mobile body[data-tab="search"] .tb-center { display: flex !important; grid-column: 1 / -1; margin-top: 10px; }
 html.mobile body[data-tab="search"] .tb-search { height: 48px; border-radius: 4px; }
 
@@ -619,3 +618,13 @@ html.mobile button:active, html.mobile .card:active, html.mobile .tile:active { 
 html.mobile li.tr:active, html.mobile .lib-list li:active { background: rgba(255,255,255,.08); }
 /* La carátula y el video entran suave al cambiar de canción */
 html.mobile .np-cover img, html.mobile .bar-thumb img, html.mobile .tr-thumb img { animation: m-fade .3s ease-out; }
+
+/* ── Rendimiento (más fluido a 120 Hz) ──
+   El orbe del DJ (botón flotante, portada de DJ Nat, botón en Reproduciendo) se redibujaba en cada
+   cuadro aunque el DJ no estuviera sonando: ahora sólo se mueve con el DJ prendido */
+html.mobile body:not(.m-dj-on) .mini-orb i { animation: none; }
+/* Lo que está fuera de la pantalla no se dibuja hasta que te acercas (estantes de Inicio/Buscar y
+   las ~2000 filas de Tu biblioteca) */
+html.mobile .shelf { content-visibility: auto; contain-intrinsic-size: auto 300px; }
+html.mobile .lib-list li { content-visibility: auto; contain-intrinsic-size: auto 80px; }
+html.mobile .tile, html.mobile .card { contain: layout paint; }
