@@ -117,18 +117,25 @@ window.api = {
   loadCache: async () => {
     // La caché trae título, artista… de lo que ya se leyó; lo nuevo se llena con lo que
     // Android ya sabe de cada canción (así la lista sale completa desde el primer momento)
-    const cache = await readJson('music-cache.json', { version: 1, songs: {} })
-    for (const s of await scanOnce()) {
+    // Leer la lista guardada y buscar la música al mismo tiempo (antes una tras otra)
+    const [cache, found] = await Promise.all([readJson('music-cache.json', { version: 1, songs: {} }), scanOnce()])
+    for (const s of found) {
       const c = cache.songs[s.path]
       if (!c || c.mtime !== s.mtime) {
         cache.songs[s.path] = { title: s.title, artist: s.artist, album: s.album, duration: s.duration, mtime: s.mtime }
       }
+      // Carátula ya guardada en el celular: sale desde que abre la app
+      cache.songs[s.path].cover = s.cover ? window.api.fileUrl(s.cover) : null
     }
     return cache
   },
   saveCache: cache => writeJson('music-cache.json', cache),
   scanMusic: async () => (await scanOnce()).map(s => ({ path: s.path, mtime: s.mtime })),
-  readMeta: path => Music.readMeta({ path }),
+  readMeta: async path => {
+    const m = await Music.readMeta({ path })
+    if (m.cover) m.cover = window.api.fileUrl(m.cover)
+    return m
+  },
   onLibraryChanged: cb => listeners.library.push(cb),
 
   // Ventana: en el celular no hay

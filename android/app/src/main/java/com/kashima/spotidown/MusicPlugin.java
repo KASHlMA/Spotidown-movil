@@ -21,6 +21,8 @@ import com.getcapacitor.annotation.PermissionCallback;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.security.MessageDigest;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 
@@ -36,6 +38,58 @@ import java.nio.charset.StandardCharsets;
     }
 )
 public class MusicPlugin extends Plugin {
+
+    // Carátulas guardadas como JPG (files/covers): sacarlas del archivo de música tarda ~70 ms cada
+    // una y antes se hacía cada vez que abrías la app. La primera vez se sacan todas en segundo plano.
+    private File coversDir() {
+        File d = new File(getContext().getFilesDir(), "covers");
+        if (!d.exists()) d.mkdirs();
+        return d;
+    }
+    private File coverFile(String path, long mtime) {
+        try {
+            byte[] h = MessageDigest.getInstance("SHA-1").digest((path + "|" + mtime).getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : h) sb.append(String.format("%02x", b));
+            return new File(coversDir(), sb + ".jpg");
+        } catch (Exception e) { return new File(coversDir(), Integer.toHexString((path + mtime).hashCode()) + ".jpg"); }
+    }
+    // Saca la carátula y la guarda; regresa la ruta del JPG o null si la canción no trae
+    private String makeCover(String path, long mtime, MediaMetadataRetriever mmr) {
+        File f = coverFile(path, mtime);
+        if (f.exists()) return f.getAbsolutePath();
+        byte[] pic = mmr.getEmbeddedPicture();
+        if (pic == null) return null;
+        Bitmap bmp = BitmapFactory.decodeByteArray(pic, 0, pic.length);
+        if (bmp == null) return null;
+        if (bmp.getWidth() > 400) bmp = Bitmap.createScaledBitmap(bmp, 400, Math.round(400f * bmp.getHeight() / bmp.getWidth()), true);
+        try (FileOutputStream out = new FileOutputStream(f)) {
+            bmp.compress(Bitmap.CompressFormat.JPEG, 85, out);
+            return f.getAbsolutePath();
+        } catch (Exception e) { return null; }
+    }
+    private static volatile boolean pregenRunning = false;
+    private void pregenCovers(JSArray songs) {
+        if (pregenRunning) return;
+        pregenRunning = true;
+        Thread t = new Thread(() -> {
+            try {
+                for (int i = 0; i < songs.length(); i++) {
+                    JSObject o = JSObject.fromJSONObject(songs.getJSONObject(i));
+                    String path = o.getString("path");
+                    long mtime = o.getLong("mtime");
+                    if (coverFile(path, mtime).exists()) continue;
+                    MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                    try { mmr.setDataSource(path); makeCover(path, mtime, mmr); }
+                    catch (Exception ignored) {}
+                    finally { try { mmr.release(); } catch (Exception ignored) {} }
+                }
+            } catch (Exception ignored) {
+            } finally { pregenRunning = false; }
+        });
+        t.setPriority(Thread.MIN_PRIORITY);
+        t.start();
+    }
 
     private String permAlias() {
         return Build.VERSION.SDK_INT >= 33 ? "audio" : "storage";
@@ -78,6 +132,8 @@ public class MusicPlugin extends Plugin {
                     o.put("artist", artist == null || artist.equals("<unknown>") ? "" : artist);
                     o.put("album", c.getString(3));
                     o.put("duration", c.getLong(4) / 1000.0);
+                    File cf = coverFile(path, c.getLong(5) * 1000);
+                    o.put("cover", cf.exists() ? cf.getAbsolutePath() : null);
                     songs.put(o);
                 }
             } catch (Exception e) {
@@ -87,6 +143,7 @@ public class MusicPlugin extends Plugin {
             JSObject r = new JSObject();
             r.put("songs", songs);
             call.resolve(r);
+            pregenCovers(songs);
         }).start();
     }
 
@@ -94,6 +151,7 @@ public class MusicPlugin extends Plugin {
     @PluginMethod
     public void readMeta(PluginCall call) {
         String path = call.getString("path");
+        long mtime = new File(path).lastModified() / 1000 * 1000;
         new Thread(() -> {
             JSObject r = new JSObject();
             String name = new File(path).getName().replaceAll("\\.[^.]+$", "").replaceAll("^\\d+\\s*[-–.]\\s*", "");
@@ -108,7 +166,7 @@ public class MusicPlugin extends Plugin {
                 r.put("artist", artist != null ? artist : "");
                 r.put("album", album != null ? album : "");
                 r.put("duration", dur != null ? Long.parseLong(dur) / 1000.0 : 0);
-                r.put("cover", coverDataUrl(mmr.getEmbeddedPicture()));
+                r.put("cover", makeCover(path, mtime, mmr));
             } catch (Exception e) {
                 r.put("title", name);
                 r.put("artist", "");
