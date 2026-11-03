@@ -280,6 +280,16 @@ html.mobile .col-shuffle { order: 1; }
 html.mobile #col-play { order: 2; width: 56px; height: 56px; }
 /* Foto del artista: se desvanece abajo hacia el fondo en lugar de terminar en seco */
 html.mobile .col-cover.round { background: transparent !important; }
+/* Página de artista: la foto desde hasta arriba (detrás de la flecha) y sin buscador */
+html.mobile .col-hero:has(.col-cover.round) { padding-top: 0; }
+html.mobile #col-scroll:has(.col-cover.round) #col-search-wrap { display: none; }
+html.mobile .col-hero:has(.col-cover.round) .col-cover { height: 380px; }
+
+/* El nombre del artista abre su página sólo en Reproduciendo (en las listas confundía: al tocar
+   la canción a veces te mandaba al artista); y sin el subrayado que se quedaba pegado al tocar */
+html.mobile .link { text-decoration: none !important; }
+html.mobile .link[data-artist] { pointer-events: none; }
+html.mobile #rp-np .link[data-artist] { pointer-events: auto; }
 html.mobile .col-cover.round img { -webkit-mask-image: linear-gradient(#000 45%, transparent); mask-image: linear-gradient(#000 45%, transparent); }
 html.mobile .col-hero:has(.col-cover.round) .col-info { background: none; }
 html.mobile .col-hero:has(.col-cover.round) .col-meta { text-shadow: 0 1px 8px rgba(0,0,0,.7); }
@@ -541,3 +551,22 @@ html.mobile .m-np-top .m-np-extra { margin: 14px 0 18px; }
 html.mobile .m-np-extra .bar-btn svg { width: 26px; height: 26px; }
 /* Lo de abajo (letra, artista) ya fuera de la primera pantalla */
 html.mobile #rp-np .np-lyrics { margin-top: 8px; }
+
+/* ── Canvas como en Spotify: el video cubre toda la primera pantalla de Reproduciendo (detrás del
+   encabezado, el título y los botones), sin la carátula, y se oscurece abajo para que se lean ── */
+html.mobile #right-panel.canvas-mode .rp-header { background: linear-gradient(rgba(0,0,0,.45), transparent); }
+html.mobile #right-panel.canvas-mode #rp-np { padding-top: 68px; }   /* (el encabezado va encima del video) */
+html.mobile #right-panel.canvas-mode .m-np-top { position: relative; }
+html.mobile #right-panel.canvas-mode .m-np-top > :not(.np-media) { position: relative; z-index: 1; }
+html.mobile #right-panel.canvas-mode .np-media { position: static; box-shadow: none; }
+html.mobile #right-panel.canvas-mode .np-cover { visibility: hidden; }
+html.mobile #right-panel.canvas-mode .np-canvas {
+  position: absolute; top: -68px; left: -16px; right: -16px; bottom: 0; border-radius: 0; z-index: 0;
+}
+/* Recortado al centro y un poco ampliado: no se ven las franjas negras ni lo de YouTube */
+html.mobile .np-canvas iframe { height: 118%; }
+html.mobile .np-canvas::after {
+  background: linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,.12) 18%, rgba(0,0,0,.12) 42%, rgba(0,0,0,.62) 66%, rgba(0,0,0,.9));
+}
+html.mobile #right-panel.canvas-mode .np-switch { position: absolute; top: 8px; left: 0; bottom: auto; z-index: 2; height: 32px; padding: 0 12px; font-size: 13px; background: rgba(0,0,0,.45); }
+html.mobile #right-panel.canvas-mode .np-title, html.mobile #right-panel.canvas-mode .np-artist { text-shadow: 0 1px 8px rgba(0,0,0,.6); }

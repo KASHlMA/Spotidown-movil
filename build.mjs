@@ -43,6 +43,24 @@ html = html
   .replace(/<body([^>]*)>/, '<body$1>\n  <div id="m-splash">' + LOGO + '</div>')
 fs.writeFileSync(path.join(WWW, 'index.html'), html)
 
+// Análisis de audio (géneros, ánimo y "parecido" de cada canción): en el celular tardaría horas y
+// se comería la batería, y la compu ya lo hizo; se lleva lo que analizó Spotidown de escritorio,
+// por título y artista (casi toda la música es la misma)
+const { songKey } = await import('./src/song-key.mjs')
+const DESK = path.join(process.env.APPDATA || path.join(process.env.HOME || '', '.config'), 'music-player')
+const features = {}
+try {
+  const audio = JSON.parse(fs.readFileSync(path.join(DESK, 'audio-features.json'), 'utf8')).songs
+  const meta = JSON.parse(fs.readFileSync(path.join(DESK, 'music-cache.json'), 'utf8')).songs
+  for (const [p, d] of Object.entries(audio)) {
+    const m = meta[p]
+    if (!m || d.error) continue
+    features[songKey(m.title, m.artist)] = { styles: d.styles, moods: d.moods, emb: d.emb, lyr: d.lyr }
+  }
+} catch (e) { console.warn('Sin análisis de audio de la compu:', e.message) }
+fs.writeFileSync(path.join(WWW, 'audio-features.json'), JSON.stringify(features))
+console.log('análisis de audio:', Object.keys(features).length, 'canciones')
+
 await build({
   entryPoints: [path.join(import.meta.dirname, 'src', 'api-mobile.js')],
   bundle: true, format: 'iife', target: 'chrome100', outfile: path.join(WWW, 'api-mobile.js'),

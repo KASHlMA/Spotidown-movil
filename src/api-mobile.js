@@ -12,6 +12,8 @@ import { TextToSpeech } from '@capacitor-community/text-to-speech'
 import { createLastfm } from './lastfm-web.js'
 import { createGemini, weatherFor } from './gemini-web.js'
 import { getJson, toBase64 } from './store.js'
+import { ytVideos } from './youtube-web.js'
+import { songKey } from './song-key.mjs'
 import { setupMobileUiWhenReady, goBack } from './mobile-ui.js'
 
 // android/.../MusicPlugin.java (en la compu, para ver el diseño, se puede simular con window.__musicWeb)
@@ -192,9 +194,20 @@ window.api = {
   lastfmTags: q => lastfm.tags(q),
   lastfmSimilar: q => lastfm.similar(q),
 
-  // Fase 3: análisis de audio
-  audioCached: async () => ({}),
-  audioAnalyze: async () => 0,
+  // Análisis de audio: el que hizo la compu (build.mjs lo mete en la app), por título y artista
+  audioCached: async () => {
+    const [db, cache] = await Promise.all([
+      fetch('audio-features.json').then(r => r.json()).catch(() => ({})),
+      readJson('music-cache.json', { songs: {} }),
+    ])
+    const out = {}
+    for (const [p, c] of Object.entries(cache.songs)) {
+      const d = db[songKey(c.title, c.artist)]
+      if (d) out[p] = d
+    }
+    return out
+  },
+  audioAnalyze: async () => 0,   // (lo nuevo se analiza en la compu)
   onAudioResult: cb => listeners.audioResult.push(cb),
   onAudioProgress: cb => listeners.audioProgress.push(cb),
 
@@ -245,5 +258,5 @@ window.api = {
   },
 
   // Fase 3: Canvas
-  ytVideos: async () => [],
+  ytVideos: (artist, title, live) => ytVideos(artist, title, live),
 }
