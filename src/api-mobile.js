@@ -200,7 +200,15 @@ try { localStorage.setItem('sd.rightMode', 'null') } catch {}
 setupMobileUiWhenReady()
 // Botón "atrás" de Android: cierra lo de encima o regresa; en Inicio la app se va a segundo
 // plano sin cerrarse (la música sigue), como Spotify
-if (Capacitor.isNativePlatform()) App.addListener('backButton', () => { if (!goBack()) App.minimizeApp() })
+// Un "atrás" a la vez: a veces llegaba dos veces seguidas (con el gesto) y el segundo, mientras
+// Reproduciendo todavía bajaba, te regresaba a la página anterior (un álbum o un artista)
+let lastBack = 0
+if (Capacitor.isNativePlatform()) App.addListener('backButton', () => {
+  const now = Date.now()
+  if (now - lastBack < 450) return
+  lastBack = now
+  if (!goBack()) App.minimizeApp()
+})
 
 window.api = {
   // Música

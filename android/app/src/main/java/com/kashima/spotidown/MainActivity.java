@@ -6,6 +6,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Display;
+import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -43,6 +45,7 @@ public class MainActivity extends BridgeActivity {
         // Android 13+: los controles de la notificación necesitan este permiso
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[] { Manifest.permission.POST_NOTIFICATIONS }, 1);
+        maxRefreshRate();
         WebView web = getBridge().getWebView();
         // Mismo gris que la pantalla de carga (si no, entre el logo de Android y la página se ve un cuadro negro)
         web.setBackgroundColor(Color.parseColor("#202020"));
@@ -69,6 +72,22 @@ public class MainActivity extends BridgeActivity {
                 view.postDelayed(() -> painted = true, 150);
             }
         });
+    }
+
+    // La pantalla a lo más rápido que dé (120 / 144 Hz): si la app no lo pide, Android la deja en 60 Hz
+    // y las animaciones y el scroll se sienten lentos
+    private void maxRefreshRate() {
+        try {
+            Display d = Build.VERSION.SDK_INT >= 30 ? getDisplay() : getWindowManager().getDefaultDisplay();
+            Display.Mode cur = d.getMode(), best = cur;
+            for (Display.Mode m : d.getSupportedModes()) {
+                if (m.getPhysicalWidth() == cur.getPhysicalWidth() && m.getPhysicalHeight() == cur.getPhysicalHeight()
+                        && m.getRefreshRate() > best.getRefreshRate()) best = m;
+            }
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.preferredDisplayModeId = best.getModeId();
+            getWindow().setAttributes(lp);
+        } catch (Exception ignored) {}
     }
 
     // Canvas: la página del video de YouTube se pide aquí para meterle un estilo que esconde todo

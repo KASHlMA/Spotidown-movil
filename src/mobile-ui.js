@@ -610,11 +610,41 @@ function setupCanvas() {
   const fillThumb = () => { const c = window.sd.currentSong?.cover; if (c && thumb.src !== c) thumb.src = c }
   new MutationObserver(fillThumb).observe($('np-title'), { childList: true, characterData: true, subtree: true })
   // Tocar el video (no los botones): esconde / enseña los controles
+  let animating = false
   top.addEventListener('click', e => {
-    if (!panel.classList.contains('canvas-mode')) return
+    if (!panel.classList.contains('canvas-mode') || animating) return
     if (e.target.closest('button, a, input, .slider-track, .np-row, .bar-center, .m-np-extra, .m-lyr-now')) return
-    body.classList.toggle('m-np-clean')
+    animating = true
+    toggleClean(() => { animating = false })
   })
+  // Lo que se queda (letra, canción, barra) se desliza a su nuevo lugar; lo que se va se desvanece
+  const EASE = 'cubic-bezier(.2, .8, .2, 1)'
+  const movers = () => [...document.querySelectorAll('#rp-np .m-lyr-now, #rp-np .np-row, #rp-np .bar-seek')]
+  const fading = () => [...document.querySelectorAll('#rp-np .bar-controls, #rp-np .m-np-extra, #np-like')]
+  const slide = (els, before) => els.forEach((el, i) => {
+    const dy = before[i] - el.getBoundingClientRect().top
+    if (dy) el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 340, easing: EASE })
+  })
+  function toggleClean(done) {
+    const hide = !body.classList.contains('m-np-clean')
+    const els = movers()
+    if (hide) {
+      const outs = fading().map(el => el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 170, easing: 'ease-out', fill: 'forwards' }))
+      setTimeout(() => {
+        const before = els.map(el => el.getBoundingClientRect().top)
+        body.classList.add('m-np-clean')
+        outs.forEach(a => a.cancel())
+        slide(els, before)
+        setTimeout(done, 340)
+      }, 150)
+    } else {
+      const before = els.map(el => el.getBoundingClientRect().top)
+      body.classList.remove('m-np-clean')
+      slide(els, before)
+      fading().forEach(el => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, delay: 90, easing: 'ease-out', fill: 'backwards' }))
+      setTimeout(done, 350)
+    }
+  }
   // Sin video, o al cerrar Reproduciendo, vuelven los controles
   new MutationObserver(() => {
     if (!panel.classList.contains('canvas-mode') || panel.hidden) body.classList.remove('m-np-clean')
