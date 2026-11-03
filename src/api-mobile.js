@@ -155,9 +155,10 @@ window.api = {
   djSay: wrap((text, engine) => engine === 'gemini' ? gemini.say(text) : Promise.reject(new Error('sin dalia'))),
   djSayNow: async (text, id) => {
     try {
-      return { ok: await gemini.sayNow(text, buf => { const b = toBase64(buf); for (const cb of listeners.djChunk) cb(id, b) }) }
+      return { ok: await gemini.sayNow(text, buf => { const b = toBase64(buf); for (const cb of listeners.djChunk) cb(id, b) }, id) }
     } catch (e) { return { error: e.message, partial: !!e.partial } }
   },
+  djCancel: id => gemini.cancelNow(id),
   djCached: text => gemini.cached(text),
   djClean: keep => gemini.cleanup(keep),
   djThink: wrap((system, prompt, schema, urgent) => gemini.think(system, prompt, schema, urgent)),

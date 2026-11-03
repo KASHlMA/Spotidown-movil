@@ -171,7 +171,11 @@ export function createGemini() {
     for (let attempt = 1; attempt <= 3; attempt++) {
       let session = null
       try {
+        // Lo de fondo espera a que nadie esté esperando a Nat (con muchas sesiones a la vez
+        // Google manda el texto pero no el audio)
+        while (waiting > 0) await sleep(500)
         session = await openLiveRetry(text)
+        background.add(session)
         let buf = await session.speak(ON_AIR)
         if (!buf.length) throw Object.assign(new Error('network'), { detail: `sin audio; dijo: ${session.said()}` })
         await sleep(1200)
@@ -191,7 +195,7 @@ export function createGemini() {
       } catch (e) {
         log('falló', `intento ${attempt}: ${e.message} ${e.detail || ''}`, text)
         if (e.message === 'invalid-key') throw e
-      } finally { session?.close() }
+      } finally { session?.close(); background.delete(session) }
       if (attempt < 3) await sleep(attempt * 4000)
     }
     throw new Error('unfaithful')
@@ -207,11 +211,25 @@ export function createGemini() {
   }
 
   // En vivo para cuando alguien espera: el audio va saliendo por onChunk
-  async function sayNow(text, onChunk) {
+  const liveNow = new Map()
+  const cancelled = new Set()   // cancelados mientras todavía se conectaban
+  const cancelNow = id => { cancelled.add(id); liveNow.get(id)?.close(); liveNow.delete(id) }
+  // Cuando alguien espera a Nat (sayNow), lo de fondo (liveSay) se quita: se cierran sus
+  // sesiones y no abre otras hasta que Nat termine
+  const background = new Set()
+  let waiting = 0
+  async function sayNow(text, onChunk, id) {
+    waiting++
+    for (const s of background) s.close()
+    try { return await sayNowInner(text, onChunk, id) } finally { waiting-- }
+  }
+  async function sayNowInner(text, onChunk, id) {
     await ready
     const name = await nameFor(text)
     if (known.has(name)) return { file: pathFor(name) }
     const session = await openLive(text)
+    if (id != null) liveNow.set(id, session)
+    if (cancelled.delete(id)) { session.close(); throw new Error('cancelled') }
     let emitted = false
     const held = []
     let open = false, stage = false
@@ -254,7 +272,7 @@ export function createGemini() {
     } catch (e) {
       log('falló', `en vivo: ${e.message} ${e.detail || ''}`, text)
       throw Object.assign(e, { partial: emitted })
-    } finally { session.close() }
+    } finally { session.close(); liveNow.delete(id) }
   }
 
   // Tope diario igual que en escritorio
@@ -324,7 +342,7 @@ export function createGemini() {
       } else localStorage.removeItem(KEY)
       return { ok: true }
     },
-    say, sayNow, think, used,
+    say, sayNow, cancelNow, think, used,
     cached: async text => { await ready; return known.has(await nameFor(text)) },
     async cleanup(keep, maxDays = 7) {
       await ready
