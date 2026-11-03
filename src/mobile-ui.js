@@ -597,8 +597,12 @@ function closeOverlaysOnLink() {
 // del video, y al tocar el video se esconden los botones (sólo quedan la canción y la barra)
 function setupCanvas() {
   const body = document.body, panel = $('right-panel'), top = document.querySelector('.m-np-top')
-  const sw = $('np-switch')
-  top.insertBefore(sw, top.querySelector('.m-lyr-now') || top.querySelector('.np-row'))
+  // Con video, abajo a la derecha del video (arriba de la canción); con carátula, encima de ella como antes
+  const sw = $('np-switch'), media = top.querySelector('.np-media')
+  const placeSwitch = () => {
+    if (panel.classList.contains('canvas-mode')) { if (sw.parentNode !== top) top.insertBefore(sw, top.querySelector('.m-lyr-now') || top.querySelector('.np-row')) }
+    else if (sw.parentNode !== media) media.append(sw)
+  }
   const thumb = document.createElement('img')
   thumb.className = 'm-np-thumb'
   thumb.alt = ''
@@ -614,6 +618,7 @@ function setupCanvas() {
   // Sin video, o al cerrar Reproduciendo, vuelven los controles
   new MutationObserver(() => {
     if (!panel.classList.contains('canvas-mode') || panel.hidden) body.classList.remove('m-np-clean')
+    placeSwitch()
     fillThumb()
   }).observe(panel, { attributes: true, attributeFilter: ['class', 'hidden'] })
 }

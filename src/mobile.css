@@ -569,20 +569,21 @@ html.mobile .np-canvas::after {
   background: linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,.12) 18%, rgba(0,0,0,.12) 42%, rgba(0,0,0,.62) 66%, rgba(0,0,0,.9));
 }
 /* "Cambiar a carátula / video": chiquito, abajo a la derecha del video (arriba de la canción) */
-html.mobile #rp-np .np-switch {
+html.mobile #right-panel.canvas-mode #rp-np .np-switch {
   position: relative; left: auto; bottom: auto; align-self: flex-end; z-index: 2; margin: 0 0 10px;
   height: 30px; padding: 0 11px; font-size: 12px; background: rgba(0,0,0,.45);
 }
-html.mobile #rp-np .np-switch svg { width: 16px; height: 16px; }
+html.mobile #right-panel.canvas-mode #rp-np .np-switch svg { width: 16px; height: 16px; }
 /* Carátula chiquita junto al título (sólo con video) */
 .m-np-thumb { display: none; }
 html.mobile #right-panel.canvas-mode .m-np-thumb { display: block; width: 52px; height: 52px; border-radius: 4px; object-fit: cover; flex: none; margin-right: 12px; }
-/* Con video los controles van más arriba (como Spotify), y el video llena toda la pantalla: la
-   tarjeta de la letra queda abajo, fuera de la vista (se ve al deslizar) */
-html.mobile #right-panel.canvas-mode .m-np-top { min-height: calc(100dvh - 64px); padding-bottom: 150px; }
-/* Al tocar el video: sólo la canción y la barra */
+/* Con video: el video llena toda la pantalla y todo va pegado abajo; la tarjeta de la letra
+   queda fuera de la vista (se ve al deslizar) */
+html.mobile #right-panel.canvas-mode .m-np-top { min-height: calc(100dvh - 64px); padding-bottom: 20px; }
+/* Al tocar el video: sólo la letra, la canción y la barra, abajo (lo demás se quita, no sólo se
+   esconde: si no, seguía ocupando su lugar y la canción se quedaba a media pantalla) */
 html.mobile body.m-np-clean .bar-controls, html.mobile body.m-np-clean .m-np-extra,
-html.mobile body.m-np-clean #rp-np .np-switch,
+html.mobile body.m-np-clean #rp-np .np-switch { display: none !important; }
 html.mobile body.m-np-clean #np-like { visibility: hidden; }
 html.mobile #right-panel.canvas-mode .np-title, html.mobile #right-panel.canvas-mode .np-artist { text-shadow: 0 1px 8px rgba(0,0,0,.6); }
 /* Con video el espacio de la carátula no ocupa lugar (el video está detrás de todo); menos
