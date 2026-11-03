@@ -441,6 +441,17 @@ function setupDj() {
   label.innerHTML = '<b>A continuación</b><span>DJ Nat</span>'
   $('rp-np').querySelector('.np-row').prepend(label)
   const orbHome = $('dj-orb').parentNode, orbNext = $('dj-orb').nextSibling
+  // Mientras habla el DJ no va el video (el orbe ocupa el lugar de la carátula: con el video se
+  // estiraba feo); el video sale cuando ya empieza la canción
+  const panel = $('right-panel')
+  const syncCanvasTalk = () => {
+    const talkingNow = body.classList.contains('m-dj-talk')
+    if (talkingNow && panel.classList.contains('canvas-mode')) panel.classList.remove('canvas-mode')
+    else if (!talkingNow && $('np-canvas').classList.contains('on') && !panel.classList.contains('canvas-mode')) panel.classList.add('canvas-mode')
+  }
+  new MutationObserver(syncCanvasTalk).observe(panel, { attributes: true, attributeFilter: ['class'] })
+  new MutationObserver(syncCanvasTalk).observe($('np-canvas'), { attributes: true, attributeFilter: ['class'] })
+
   // Barra de abajo mientras habla
   const barDj = document.createElement('div')
   barDj.className = 'm-bar-dj'
@@ -460,6 +471,7 @@ function setupDj() {
       body.classList.toggle('m-dj-talk', t)
       if (t) { document.querySelector('#rp-np .np-media').append($('dj-orb')); sd.startOrb() }
       else orbHome.insertBefore($('dj-orb'), orbNext)
+      syncCanvasTalk()
     }
     if (body.classList.contains('rp-np') && body.classList.contains('m-djmode')) {
       const v = d.vibe || 'DJ Nat'
