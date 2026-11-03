@@ -45,7 +45,8 @@ public class MainActivity extends BridgeActivity {
         // Android 13+: los controles de la notificación necesitan este permiso
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[] { Manifest.permission.POST_NOTIFICATIONS }, 1);
-        maxRefreshRate();
+        // (antes se fijaba la pantalla a lo más rápido, 144 Hz, todo el tiempo: gastaba batería. Ahora
+        // la frecuencia la decide Android con lo que pusiste en Ajustes → Pantalla, y baja cuando nada se mueve)
         WebView web = getBridge().getWebView();
         // Mismo gris que la pantalla de carga (si no, entre el logo de Android y la página se ve un cuadro negro)
         web.setBackgroundColor(Color.parseColor("#202020"));

@@ -664,6 +664,22 @@ function setupCanvas() {
       setTimeout(done, 350)
     }
   }
+  // Con video, sin tocar la pantalla 2 s: se esconden solos (tocar los vuelve a enseñar)
+  let idleT = 0
+  const armIdle = () => {
+    clearTimeout(idleT)
+    idleT = setTimeout(() => {
+      if (!panel.classList.contains('canvas-mode') || panel.hidden || body.classList.contains('m-np-clean')) return
+      if (animating || $('rp-np').scrollTop > 10 || body.classList.contains('m-dj-talk')) return
+      animating = true
+      toggleClean(() => { animating = false })
+    }, 2000)
+  }
+  panel.addEventListener('touchstart', armIdle, { passive: true })
+  panel.addEventListener('touchend', armIdle, { passive: true })
+  $('rp-np').addEventListener('scroll', armIdle, { passive: true })
+  new MutationObserver(armIdle).observe(panel, { attributes: true, attributeFilter: ['class', 'hidden'] })
+
   // Sin video, o al cerrar Reproduciendo, vuelven los controles
   new MutationObserver(() => {
     if (!panel.classList.contains('canvas-mode') || panel.hidden) body.classList.remove('m-np-clean')
