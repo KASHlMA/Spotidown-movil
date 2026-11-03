@@ -543,6 +543,15 @@ function setupDj() {
   }
   function closeSheet() { sheet.hidden = true; input.blur() }
   window.__closeDjSheet = () => { if (sheet.hidden) return false; closeSheet(); return true }
+
+  // Botón flotante del DJ en las pantallas principales (abajo a la derecha, arriba del mini
+  // reproductor): abre "¿Qué te gustaría escuchar?"
+  const fab = document.createElement('button')
+  fab.className = 'm-dj-fab'
+  fab.title = 'DJ Nat'
+  fab.innerHTML = '<span class="mini-orb"><i></i><i></i><i></i></span>'
+  fab.addEventListener('click', () => openSheet())
+  document.querySelector('.app-layout').append(fab)
 }
 
 // Regresar, como el "atrás" de Android: cierra lo que esté encima o va a la pantalla anterior

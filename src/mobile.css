@@ -28,8 +28,7 @@ html.mobile body.show-lib .sidebar {
 }
 html.mobile body.show-lib .sidebar .sb-header span,
 html.mobile body.show-lib .sidebar .sb-chips,
-html.mobile body.show-lib .sidebar .lib-text,
-html.mobile body.show-lib .sidebar .lib-status { display: revert !important; }
+html.mobile body.show-lib .sidebar .lib-text { display: revert !important; }
 html.mobile .rightpanel {
   position: absolute !important; inset: 0 !important; width: auto !important; z-index: 30;
   box-shadow: none !important;
@@ -480,3 +479,17 @@ html.mobile #col-scroll {
     color-mix(in srgb, var(--hero) 20%, var(--panel)) 480px,
     var(--panel) 680px);
 }
+
+/* Botón flotante del DJ (pantallas principales) */
+.m-dj-fab { display: none; }
+html.mobile .m-dj-fab {
+  display: flex; position: absolute; right: 16px; bottom: 14px; z-index: 25; width: 58px; height: 58px;
+  border-radius: 50%; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 35% 30%, #3a1418, #120708); box-shadow: 0 6px 20px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.08);
+}
+html.mobile .m-dj-fab .mini-orb { width: 34px; height: 34px; opacity: 1; }
+/* No va encima de las páginas que se abren arriba (Reproduciendo, fila, letra) ni de Ajustes */
+html.mobile body.rp-np .m-dj-fab, html.mobile body.m-queue .m-dj-fab, html.mobile body.m-lyrics .m-dj-fab,
+html.mobile body:has(#right-panel:not([hidden])) .m-dj-fab { display: none; }
+/* Que la última fila de las listas no quede tapada por el botón */
+html.mobile .home-content, html.mobile #song-list, html.mobile .lib-list { padding-bottom: 80px; }
