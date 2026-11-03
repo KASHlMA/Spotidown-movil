@@ -470,15 +470,29 @@ html.mobile body.m-dj-talk #rp-np .np-row { margin-top: 18px; }
 /* El botón del DJ siempre está en Reproduciendo (con cualquier canción) */
 html.mobile body.rp-np .m-dj-btn { display: flex; width: 44px; height: 44px; border-radius: 50%; align-items: center; justify-content: center; background: rgba(255,255,255,.12); }
 
-/* Álbumes y playlists: un solo degradado del color de la portada hacia el fondo (antes el de
-   arriba se oscurecía y abajo volvía a empezar el color: se veía un corte) */
+/* Álbumes y playlists: un solo degradado del color de la portada que termina en el botón de
+   reproducir (--grad-end lo pone mobile-ui.js); de ahí para abajo, fondo negro */
 html.mobile .col-hero, html.mobile .col-body { background: transparent !important; }
 html.mobile #col-scroll {
-  background: linear-gradient(var(--hero) 0px,
-    color-mix(in srgb, var(--hero) 55%, var(--panel)) 280px,
-    color-mix(in srgb, var(--hero) 20%, var(--panel)) 480px,
-    var(--panel) 680px);
+  background:
+    linear-gradient(var(--hero), color-mix(in srgb, var(--hero) 45%, var(--panel)) 55%, var(--panel))
+      top / 100% var(--grad-end, 560px) no-repeat local,
+    var(--panel);
 }
+
+/* Buscar en la playlist: arriba de la portada, como en Spotify */
+html.mobile #col-search-wrap { margin: 12px 16px 4px 64px; height: 38px; background: rgba(255,255,255,.14); color: #fff; }
+html.mobile #col-search-wrap input { width: 100%; font-size: 14px; }
+html.mobile #col-search-wrap input::placeholder { color: rgba(255,255,255,.75); }
+
+/* Mientras habla el DJ, la barra de abajo dice "DJ Nat" con su orbe (no la canción) */
+.m-bar-dj { display: none; }
+html.mobile body.m-dj-talk .bar-left > :not(.m-bar-dj) { display: none !important; }
+html.mobile body.m-dj-talk .m-bar-dj { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+html.mobile .m-bar-dj .mini-orb { width: 40px; height: 40px; flex: none; opacity: 1; }
+html.mobile .m-bar-dj-text { min-width: 0; }
+html.mobile .m-bar-dj-text b { display: block; font-size: 14px; color: #fff; }
+html.mobile .m-bar-dj-text span { display: block; font-size: 12.5px; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Botón flotante del DJ (pantallas principales) */
 .m-dj-fab { display: none; }

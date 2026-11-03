@@ -432,8 +432,16 @@ function setupDj() {
   label.innerHTML = '<b>A continuación</b><span>DJ Nat</span>'
   $('rp-np').querySelector('.np-row').prepend(label)
   const orbHome = $('dj-orb').parentNode, orbNext = $('dj-orb').nextSibling
+  // Barra de abajo mientras habla
+  const barDj = document.createElement('div')
+  barDj.className = 'm-bar-dj'
+  barDj.innerHTML = '<span class="mini-orb"><i></i><i></i><i></i></span><div class="m-bar-dj-text"><b>DJ Nat</b><span></span></div>'
+  $('bar-cover').parentNode.prepend(barDj)
+  const barDjSub = barDj.querySelector('.m-bar-dj-text span')
   let talking = false
   setInterval(() => {
+    const sub = sd.dj.thinking ? 'Preparando lo que sigue…' : sd.dj.vibe ? `Hablando · ${sd.dj.vibe}` : 'Hablando'
+    if (barDjSub.textContent !== sub) barDjSub.textContent = sub
     const d = sd.dj, ctxDj = sd.playContext?.key === 'dj:'
     body.classList.toggle('m-djmode', d.on && (ctxDj || d.speaking || d.thinking))
     const t = d.on && (d.speaking || d.thinking)
@@ -608,8 +616,22 @@ function hideSplash() {
   check()
 }
 
+// Buscador arriba de la portada y el degradado hasta el botón de reproducir
+function setupCollection() {
+  $('col-scroll').insertBefore($('col-search-wrap'), $('col-hero'))
+  const scroll = $('col-scroll'), actions = $('col-actions')
+  const fit = () => {
+    if (!scroll.clientHeight) return   // (la página está escondida)
+    const end = actions.getBoundingClientRect().bottom - scroll.getBoundingClientRect().top + scroll.scrollTop
+    scroll.style.setProperty('--grad-end', Math.round(end) + 'px')
+  }
+  new ResizeObserver(fit).observe($('col-hero'))
+  new MutationObserver(fit).observe($('col-title'), { childList: true, characterData: true, subtree: true })
+  fit()
+}
+
 export function setupMobileUiWhenReady() {
-  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); hideSplash() }
+  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); setupCollection(); hideSplash() }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
   go()
 }
