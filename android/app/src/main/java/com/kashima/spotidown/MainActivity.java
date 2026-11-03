@@ -16,9 +16,14 @@ import androidx.core.splashscreen.SplashScreen;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,6 +56,10 @@ public class MainActivity extends BridgeActivity {
                 Uri url = request.getUrl();
                 String p = url.getPath();
                 if (p != null && p.startsWith("/_music_/")) return serveMusic(p.substring("/_music_".length()), request);
+                if ("www.youtube-nocookie.com".equals(url.getHost()) && p != null && p.startsWith("/embed/")) {
+                    WebResourceResponse r = serveEmbed(request);
+                    if (r != null) return r;
+                }
                 return super.shouldInterceptRequest(view, request);
             }
             @Override
@@ -60,6 +69,38 @@ public class MainActivity extends BridgeActivity {
                 view.postDelayed(() -> painted = true, 150);
             }
         });
+    }
+
+    // Canvas: la página del video de YouTube se pide aquí para meterle un estilo que esconde todo
+    // menos el video (el ícono de pausa, el título, el logo…), como hace main.js en escritorio.
+    // Si algo falla regresa null y el WebView la carga normal.
+    private static final String EMBED_STYLE = "<style>body *:not(video):not(:has(video)){display:none!important}"
+        + "html,body{background:#000!important}</style>";
+    private static WebResourceResponse serveEmbed(WebResourceRequest request) {
+        if (!"GET".equals(request.getMethod())) return null;
+        try {
+            HttpURLConnection c = (HttpURLConnection) new URL(request.getUrl().toString()).openConnection();
+            for (Map.Entry<String, String> h : request.getRequestHeaders().entrySet()) {
+                if (!h.getKey().equalsIgnoreCase("Accept-Encoding")) c.setRequestProperty(h.getKey(), h.getValue());
+            }
+            // Sin "Referer" el reproductor de YouTube no carga
+            if (c.getRequestProperty("Referer") == null) c.setRequestProperty("Referer", "https://localhost/");
+            c.setConnectTimeout(8000);
+            c.setReadTimeout(8000);
+            if (c.getResponseCode() != 200) return null;
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try (InputStream in = c.getInputStream()) {
+                byte[] buf = new byte[16384];
+                for (int n; (n = in.read(buf)) > 0; ) out.write(buf, 0, n);
+            }
+            String html = out.toString("UTF-8");
+            int head = html.indexOf("</head>");
+            if (head < 0) return null;
+            html = html.substring(0, head) + EMBED_STYLE + html.substring(head);
+            return new WebResourceResponse("text/html", "utf-8", new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static WebResourceResponse serveMusic(String path, WebResourceRequest request) {

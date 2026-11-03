@@ -568,5 +568,23 @@ html.mobile .np-canvas iframe { height: 118%; }
 html.mobile .np-canvas::after {
   background: linear-gradient(rgba(0,0,0,.4), rgba(0,0,0,.12) 18%, rgba(0,0,0,.12) 42%, rgba(0,0,0,.62) 66%, rgba(0,0,0,.9));
 }
-html.mobile #right-panel.canvas-mode .np-switch { position: absolute; top: 8px; left: 0; bottom: auto; z-index: 2; height: 32px; padding: 0 12px; font-size: 13px; background: rgba(0,0,0,.45); }
+/* "Cambiar a carátula / video": chiquito, abajo a la derecha del video (arriba de la canción) */
+html.mobile #rp-np .np-switch {
+  position: relative; left: auto; bottom: auto; align-self: flex-end; z-index: 2; margin: 0 0 10px;
+  height: 30px; padding: 0 11px; font-size: 12px; background: rgba(0,0,0,.45);
+}
+html.mobile #rp-np .np-switch svg { width: 16px; height: 16px; }
+/* Carátula chiquita junto al título (sólo con video) */
+.m-np-thumb { display: none; }
+html.mobile #right-panel.canvas-mode .m-np-thumb { display: block; width: 52px; height: 52px; border-radius: 4px; object-fit: cover; flex: none; margin-right: 12px; }
+/* Con video los controles van más arriba (como Spotify): se asoma la letra abajo */
+html.mobile #right-panel.canvas-mode .m-np-top { min-height: calc(100dvh - 136px - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+/* Al tocar el video: sólo la canción y la barra */
+html.mobile body.m-np-clean .bar-controls, html.mobile body.m-np-clean .m-np-extra,
+html.mobile body.m-np-clean #rp-np .np-switch, html.mobile body.m-np-clean .m-lyr-now,
+html.mobile body.m-np-clean #np-like { visibility: hidden; }
 html.mobile #right-panel.canvas-mode .np-title, html.mobile #right-panel.canvas-mode .np-artist { text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+/* Con video el espacio de la carátula no ocupa lugar (el video está detrás de todo); menos
+   mientras habla el DJ, que usa ese lugar para su orbe */
+html.mobile body:not(.m-dj-talk) #right-panel.canvas-mode .m-np-top .np-media { height: 0; aspect-ratio: auto; margin: 0; }
+html.mobile body.m-dj-talk #right-panel.canvas-mode .m-np-top { min-height: calc(100dvh - 136px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }

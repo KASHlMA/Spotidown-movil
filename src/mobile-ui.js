@@ -592,6 +592,94 @@ function closeOverlaysOnLink() {
   }, true)   // antes que el de renderer.js, que abre la página
 }
 
+// ── Canvas como Spotify ──
+// Con video: la carátula chiquita junto al título, el botón "Cambiar a carátula" abajo a la derecha
+// del video, y al tocar el video se esconden los botones (sólo quedan la canción y la barra)
+function setupCanvas() {
+  const body = document.body, panel = $('right-panel'), top = document.querySelector('.m-np-top')
+  const sw = $('np-switch')
+  top.insertBefore(sw, top.querySelector('.m-lyr-now') || top.querySelector('.np-row'))
+  const thumb = document.createElement('img')
+  thumb.className = 'm-np-thumb'
+  thumb.alt = ''
+  $('rp-np').querySelector('.np-row').prepend(thumb)
+  const fillThumb = () => { const c = window.sd.currentSong?.cover; if (c && thumb.src !== c) thumb.src = c }
+  new MutationObserver(fillThumb).observe($('np-title'), { childList: true, characterData: true, subtree: true })
+  // Tocar el video (no los botones): esconde / enseña los controles
+  top.addEventListener('click', e => {
+    if (!panel.classList.contains('canvas-mode')) return
+    if (e.target.closest('button, a, input, .slider-track, .np-row, .bar-center, .m-np-extra, .m-lyr-now')) return
+    body.classList.toggle('m-np-clean')
+  })
+  // Sin video, o al cerrar Reproduciendo, vuelven los controles
+  new MutationObserver(() => {
+    if (!panel.classList.contains('canvas-mode') || panel.hidden) body.classList.remove('m-np-clean')
+    fillThumb()
+  }).observe(panel, { attributes: true, attributeFilter: ['class', 'hidden'] })
+}
+
+// ── Gestos ──
+// Mini reproductor: deslizar a los lados cambia de canción. Reproduciendo: deslizar hacia abajo lo cierra.
+function setupGestures() {
+  const body = document.body
+  const bar = document.querySelector('.player-bar')
+  let sx = 0, sy = 0, dx = 0, swiping = false, swiped = false
+  bar.addEventListener('touchstart', e => {
+    if (body.classList.contains('rp-np') || e.target.closest('button, .slider-track')) return
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; dx = 0; swiping = true; swiped = false
+  }, { passive: true })
+  bar.addEventListener('touchmove', e => {
+    if (!swiping) return
+    dx = e.touches[0].clientX - sx
+    const dy = e.touches[0].clientY - sy
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 12) { swiping = false; bar.style.transform = ''; return }
+    bar.querySelector('.bar-left').style.transform = `translateX(${dx * 0.6}px)`
+  }, { passive: true })
+  bar.addEventListener('touchend', () => {
+    if (!swiping) return
+    swiping = false
+    const left = bar.querySelector('.bar-left')
+    left.style.transition = 'transform .2s'
+    left.style.transform = ''
+    setTimeout(() => { left.style.transition = '' }, 220)
+    if (Math.abs(dx) > 70) {
+      // (primero el botón: está dentro de la barra y el bloqueo de abajo también lo frenaba)
+      $(dx < 0 ? 'btn-next' : 'btn-prev').click()
+      swiped = true
+    }
+  })
+  // (que el deslizar no cuente también como toque que abre Reproduciendo)
+  bar.addEventListener('click', e => { if (swiped) { swiped = false; e.stopPropagation(); e.preventDefault() } }, true)
+
+  const panel = $('right-panel'), np = $('rp-np')
+  let py = 0, pdy = 0, pulling = false
+  panel.addEventListener('touchstart', e => {
+    pulling = false
+    if (!body.classList.contains('rp-np') || np.scrollTop > 0 || body.classList.contains('m-queue')) return
+    if (e.target.closest('.slider-track, input, .m-dj-sheet')) return
+    py = e.touches[0].clientY; pdy = 0; pulling = true
+  }, { passive: true })
+  panel.addEventListener('touchmove', e => {
+    if (!pulling) return
+    pdy = e.touches[0].clientY - py
+    if (pdy < 0 || np.scrollTop > 0) { pdy = 0; panel.style.transform = ''; return }
+    panel.style.transform = `translateY(${pdy}px)`
+  }, { passive: true })
+  panel.addEventListener('touchend', () => {
+    if (!pulling) return
+    pulling = false
+    if (pdy > 140) {
+      panel.style.transition = 'transform .18s'
+      panel.style.transform = 'translateY(100%)'
+      setTimeout(() => { $('rp-close').click(); panel.style.transition = ''; panel.style.transform = '' }, 180)
+    } else {
+      panel.style.transition = 'transform .2s'
+      panel.style.transform = ''
+      setTimeout(() => { panel.style.transition = '' }, 220)
+    }
+  })
+}
+
 // Regresar, como el "atrás" de Android: cierra lo que esté encima o va a la pantalla anterior
 export function goBack() {
   const body = document.body
@@ -648,7 +736,7 @@ function setupCollection() {
 }
 
 export function setupMobileUiWhenReady() {
-  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); setupCollection(); closeOverlaysOnLink(); hideSplash() }
+  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); setupCollection(); closeOverlaysOnLink(); setupCanvas(); setupGestures(); hideSplash() }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
   go()
 }

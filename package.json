@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node build.mjs",
     "sync": "node build.mjs && npx cap sync android",
-    "apk": "node build.mjs && npx cap sync android && cd android && gradlew.bat assembleDebug"
+    "apk": "node build.mjs && npx cap sync android && cd android && gradlew.bat assembleDebug",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@capacitor-community/speech-recognition": "^6.0.1",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.3",
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "patch-package": "^8.0.1"
   }
 }

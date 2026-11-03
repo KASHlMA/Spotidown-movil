@@ -85,9 +85,14 @@ function checkLater() {
 // (que además mantiene la app viva mientras suena)
 const handlers = {}
 let metaSeq = 0
+// La notificación sale hasta que algo suena por primera vez (antes, al abrir la app salía un
+// reproductor gris vacío: la app avisaba "en pausa" y el plugin la creaba)
+let started = false, lastMeta = null
 const mediaSessionShim = {
   set metadata(m) {
     if (!m) return
+    lastMeta = m
+    if (!started) return
     const seq = ++metaSeq   // si cambias de canción rápido, gana la última
     // La carátula se manda como imagen (data:) y no como liga: el plugin descarga las ligas por
     // su cuenta, y https://localhost/... sólo existe dentro de la app (fallaba y cerraba la app)
@@ -102,13 +107,36 @@ const mediaSessionShim = {
       .catch(() => {})
   },
   get metadata() { return null },
-  set playbackState(s) { MediaSession.setPlaybackState({ playbackState: s }).catch(() => {}) },
+  set playbackState(s) {
+    if (!started && s !== 'playing') return
+    if (!started) {
+      started = true
+      if (lastMeta) mediaSessionShim.metadata = lastMeta
+      setupExtraButtons()
+    }
+    MediaSession.setPlaybackState({ playbackState: s }).catch(() => {})
+  },
   get playbackState() { return 'none' },
   setActionHandler(action, fn) {
     handlers[action] = fn
     MediaSession.setActionHandler({ action }, fn ? d => fn(d) : null).catch(() => {})
   },
-  setPositionState(p) { MediaSession.setPositionState(p || {}).catch(() => {}) },
+  setPositionState(p) { if (started) MediaSession.setPositionState(p || {}).catch(() => {}) },
+}
+
+// Botones extra de la notificación, a la derecha (MediaSessionService.java, parche en patches/):
+// aleatorio (con puntito si está prendido) y DJ (si está sonando el DJ cambia la vibra; si no, lo arranca)
+function setupExtraButtons() {
+  const shuffleBtn = document.getElementById('btn-shuffle')
+  const syncShuffle = () => MediaSession.setShuffle({ on: shuffleBtn.classList.contains('active') }).catch(() => {})
+  syncShuffle()
+  new MutationObserver(syncShuffle).observe(shuffleBtn, { attributes: true, attributeFilter: ['class'] })
+  MediaSession.setActionHandler({ action: 'shuffle' }, () => shuffleBtn.click()).catch(() => {})
+  MediaSession.setActionHandler({ action: 'dj' }, () => {
+    const sd = window.sd
+    if (sd.dj.on) sd.djSwitch()
+    else sd.djStart()
+  }).catch(() => {})
 }
 if (Capacitor.isNativePlatform()) {
   Object.defineProperty(navigator, 'mediaSession', { value: mediaSessionShim, configurable: true })
