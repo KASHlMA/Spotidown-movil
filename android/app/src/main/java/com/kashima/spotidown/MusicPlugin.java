@@ -185,6 +185,8 @@ public class MusicPlugin extends Plugin {
                 while (c != null && c.moveToNext()) {
                     String path = c.getString(0);
                     if (path == null || !new File(path).exists()) continue;
+                    // Grabaciones de llamadas (Android las marca como música): no van en la biblioteca
+                    if (path.matches("(?i).*/(PhoneRecord|CallRecord|Call ?Recordings?|Recordings/Call)/.*")) continue;
                     JSObject o = new JSObject();
                     o.put("path", path);
                     o.put("mtime", c.getLong(5) * 1000);

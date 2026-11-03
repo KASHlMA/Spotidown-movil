@@ -628,3 +628,15 @@ html.mobile body:not(.m-dj-on) .mini-orb i { animation: none; }
 html.mobile .shelf { content-visibility: auto; contain-intrinsic-size: auto 300px; }
 html.mobile .lib-list li { content-visibility: auto; contain-intrinsic-size: auto 80px; }
 html.mobile .tile, html.mobile .card { contain: layout paint; }
+
+/* Tus estadísticas en el celular */
+html.mobile #view-stats { position: relative; }
+html.mobile .stats { padding: 64px 16px 110px; }
+html.mobile .st-title { font-size: 26px; }
+html.mobile .st-hero { grid-template-columns: 1fr 1fr; }
+html.mobile .st-hero > div:first-child { grid-column: 1 / -1; }
+html.mobile .st-two { grid-template-columns: 1fr; }
+html.mobile .stats-card { padding: 16px; }
+/* Barra fija arriba (con la flecha): al bajar, el texto pasa por debajo y no choca con la flecha */
+html.mobile #view-stats::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 60px; z-index: 5; background: var(--panel); }
+html.mobile #view-stats .m-page-back { z-index: 7; }

@@ -166,7 +166,7 @@ function setupMobileUi() {
     body.classList.toggle('rp-np', inNp)
     body.classList.toggle('m-lyrics', inLyr)
     // En las páginas (playlist, álbum, artista…) arriba sólo va la flecha, como Spotify
-    body.classList.toggle('m-sub', !$('view-collection').hidden)
+    body.classList.toggle('m-sub', !$('view-collection').hidden || !$('view-stats').hidden)
     const inQueue = !$('right-panel').hidden && !$('rp-queue').hidden
     body.classList.toggle('m-queue', inQueue)
     if (inQueue) $('rp-title').textContent = 'Fila de reproducción'
@@ -193,6 +193,9 @@ function setupPages() {
   back.innerHTML = icon('M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z')
   back.addEventListener('click', () => goBack())
   $('view-collection').prepend(back)
+  const back2 = back.cloneNode(true)   // (también en Tus estadísticas)
+  back2.addEventListener('click', () => goBack())
+  $('view-stats').prepend(back2)
 
   // "⋮" de cada canción (es la orilla derecha de la fila): abre su menú
   // Un toque pone la canción (en escritorio un clic selecciona y doble clic la pone: en el
