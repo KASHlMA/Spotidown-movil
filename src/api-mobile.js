@@ -82,10 +82,22 @@ function checkLater() {
 // renderer.js usa navigator.mediaSession como en escritorio; aquí se manda al plugin nativo
 // (que además mantiene la app viva mientras suena)
 const handlers = {}
+let metaSeq = 0
 const mediaSessionShim = {
   set metadata(m) {
     if (!m) return
-    MediaSession.setMetadata({ title: m.title, artist: m.artist, album: m.album, artwork: [...(m.artwork || [])] }).catch(() => {})
+    const seq = ++metaSeq   // si cambias de canción rápido, gana la última
+    // La carátula se manda como imagen (data:) y no como liga: el plugin descarga las ligas por
+    // su cuenta, y https://localhost/... sólo existe dentro de la app (fallaba y cerraba la app)
+    Promise.all([...(m.artwork || [])].map(async a => {
+      if (!a?.src || a.src.startsWith('data:')) return a
+      try {
+        const blob = await (await fetch(a.src)).blob()
+        const src = await new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = bad; r.readAsDataURL(blob) })
+        return { ...a, src }
+      } catch { return null }
+    })).then(art => seq === metaSeq && MediaSession.setMetadata({ title: m.title, artist: m.artist, album: m.album, artwork: art.filter(Boolean) }))
+      .catch(() => {})
   },
   get metadata() { return null },
   set playbackState(s) { MediaSession.setPlaybackState({ playbackState: s }).catch(() => {}) },
