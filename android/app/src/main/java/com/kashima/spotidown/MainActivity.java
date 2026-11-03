@@ -97,7 +97,10 @@ public class MainActivity extends BridgeActivity {
     // menos el video (el ícono de pausa, el título, el logo…), como hace main.js en escritorio.
     // Si algo falla regresa null y el WebView la carga normal.
     private static final String EMBED_STYLE = "<style>body *:not(video):not(:has(video)){display:none!important}"
-        + "html,body{background:#000!important}</style>";
+        + "html,body{background:#000!important}</style>"
+        // Calidad 720p: sola arrancaba en la más baja (256x136) y se veía borroso
+        + "<script>setInterval(function(){var p=document.getElementById('movie_player');"
+        + "if(p&&p.setPlaybackQualityRange&&p.getPlaybackQuality()!=='hd720'){try{p.setPlaybackQualityRange('hd720','hd720')}catch(e){}}},1500)</script>";
     private static WebResourceResponse serveEmbed(WebResourceRequest request) {
         if (!"GET".equals(request.getMethod())) return null;
         try {
