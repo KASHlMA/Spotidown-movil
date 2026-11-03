@@ -640,3 +640,31 @@ html.mobile .stats-card { padding: 16px; }
 /* Barra fija arriba (con la flecha): al bajar, el texto pasa por debajo y no choca con la flecha */
 html.mobile #view-stats::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 60px; z-index: 5; background: var(--panel); }
 html.mobile #view-stats .m-page-back { z-index: 7; }
+
+html.mobile .col-chips { padding: 2px 16px 12px; }
+html.mobile .col-chips .chip { height: 36px; padding: 0 16px; font-size: 14px; }
+/* Abajo de todo (donde va el gesto de Android): negro como la app, no el gris de la pantalla de carga */
+html.mobile.m-ready { background: #000; }
+
+/* ── Horizontal (celular acostado) ── */
+@media (orientation: landscape) and (max-height: 540px) {
+  /* Reproduciendo: la carátula a la izquierda y la canción, barra y botones a la derecha */
+  html.mobile #right-panel:not(.canvas-mode) .m-np-top {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 32px; align-content: center;
+    min-height: calc(100dvh - 72px);
+  }
+  html.mobile #right-panel:not(.canvas-mode) .m-np-top .np-media {
+    grid-column: 1; grid-row: 1 / span 6; align-self: center; margin: 0; width: calc(100dvh - 96px);
+  }
+  html.mobile #right-panel:not(.canvas-mode) .m-np-top > :not(.np-media) { grid-column: 2; }
+  html.mobile #right-panel:not(.canvas-mode) .m-np-gap { display: none; }
+  /* Con video: todo abajo a la izquierda, sin tapar el video */
+  html.mobile #right-panel.canvas-mode .m-np-top > :not(.np-media) { max-width: 520px; }
+  /* Álbumes y playlists: la portada chica junto al título */
+  html.mobile .col-hero:not(:has(.col-cover.round)) { flex-direction: row; align-items: flex-end; gap: 18px; padding-top: 60px; }
+  html.mobile .col-hero:not(:has(.col-cover.round)) .col-cover { width: 150px; height: 150px; align-self: auto; flex: none; }
+  /* Artista: la foto menos alta */
+  html.mobile .col-hero:has(.col-cover.round) .col-cover { height: 240px; }
+  /* Inicio y biblioteca: más columnas */
+  html.mobile .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

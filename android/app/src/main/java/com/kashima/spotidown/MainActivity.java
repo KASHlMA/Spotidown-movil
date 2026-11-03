@@ -49,6 +49,9 @@ public class MainActivity extends BridgeActivity {
         WebView web = getBridge().getWebView();
         // Mismo gris que la pantalla de carga (si no, entre el logo de Android y la página se ve un cuadro negro)
         web.setBackgroundColor(Color.parseColor("#202020"));
+        // Abajo (donde va el gesto de Android) negro como la app; antes se veía una franja gris
+        getWindow().setNavigationBarColor(Color.BLACK);
+        if (Build.VERSION.SDK_INT >= 29) getWindow().setNavigationBarContrastEnforced(false);
         // La música empieza a sonar sin tener que tocar dos veces
         web.getSettings().setMediaPlaybackRequiresUserGesture(false);
         // Los archivos de música se sirven en /_music_/<ruta>, con los encabezados de "Range"
