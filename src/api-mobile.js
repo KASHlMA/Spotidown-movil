@@ -41,6 +41,43 @@ function scanOnce() {
   return scanPromise
 }
 
+// Lista de la última vez guardada en localStorage (se lee al instante): al abrir la app sale ya,
+// y la búsqueda de verdad (~1.7 s) va unos segundos después; si encontró algo distinto, se refresca
+const SNAP = 'music-snap'
+let snap = null
+try { snap = JSON.parse(localStorage.getItem(SNAP)) } catch {}
+const snapFiles = cache => Object.entries(cache.songs).map(([path, c]) => ({ path, mtime: c.mtime }))
+const snapSig = cache => Object.entries(cache.songs).map(([p, c]) => p + '|' + c.mtime + '|' + (c.cover || '')).join(';')
+function saveSnap(cache) {
+  try { localStorage.setItem(SNAP, JSON.stringify(cache)) } catch (e) { console.error('snap', e) }
+}
+async function realCache() {
+  // La caché trae título, artista… de lo que ya se leyó; lo nuevo se llena con lo que
+  // Android ya sabe de cada canción (así la lista sale completa desde el primer momento)
+  const [cache, found] = await Promise.all([readJson('music-cache.json', { version: 1, songs: {} }), scanOnce()])
+  for (const s of found) {
+    const c = cache.songs[s.path]
+    if (!c || c.mtime !== s.mtime) {
+      cache.songs[s.path] = { title: s.title, artist: s.artist, album: s.album, duration: s.duration, mtime: s.mtime }
+    }
+    // Carátula ya guardada en el celular: sale desde que abre la app
+    cache.songs[s.path].cover = s.cover ? window.api.fileUrl(s.cover) : null
+  }
+  return cache
+}
+let fastCache = !!snap?.songs, fastFiles = fastCache
+function checkLater() {
+  if (fastCache || fastFiles) return
+  setTimeout(async () => {
+    const real = await realCache()
+    const found = new Set((await scanOnce()).map(x => x.path))
+    for (const p of Object.keys(real.songs)) if (!found.has(p)) delete real.songs[p]
+    if (snapSig(real) === snapSig(snap)) return
+    saveSnap(real)
+    for (const cb of listeners.library) cb()
+  }, 4000)
+}
+
 // ── Botones de la notificación / pantalla de bloqueo ─────────────────────────
 // renderer.js usa navigator.mediaSession como en escritorio; aquí se manda al plugin nativo
 // (que además mantiene la app viva mientras suena)
@@ -115,22 +152,16 @@ window.api = {
   // MainActivity.java sirve /_music_/<ruta> (bien hecho para adelantar la canción)
   fileUrl: p => Capacitor.isNativePlatform() ? location.origin + '/_music_' + p.split('/').map(encodeURIComponent).join('/') : Capacitor.convertFileSrc(p),
   loadCache: async () => {
-    // La caché trae título, artista… de lo que ya se leyó; lo nuevo se llena con lo que
-    // Android ya sabe de cada canción (así la lista sale completa desde el primer momento)
-    // Leer la lista guardada y buscar la música al mismo tiempo (antes una tras otra)
-    const [cache, found] = await Promise.all([readJson('music-cache.json', { version: 1, songs: {} }), scanOnce()])
-    for (const s of found) {
-      const c = cache.songs[s.path]
-      if (!c || c.mtime !== s.mtime) {
-        cache.songs[s.path] = { title: s.title, artist: s.artist, album: s.album, duration: s.duration, mtime: s.mtime }
-      }
-      // Carátula ya guardada en el celular: sale desde que abre la app
-      cache.songs[s.path].cover = s.cover ? window.api.fileUrl(s.cover) : null
-    }
+    if (fastCache) { fastCache = false; checkLater(); return structuredClone(snap) }
+    const cache = await realCache()
+    saveSnap(cache)
     return cache
   },
-  saveCache: cache => writeJson('music-cache.json', cache),
-  scanMusic: async () => (await scanOnce()).map(s => ({ path: s.path, mtime: s.mtime })),
+  saveCache: cache => { saveSnap(cache); return writeJson('music-cache.json', cache) },
+  scanMusic: async () => {
+    if (fastFiles) { fastFiles = false; checkLater(); return snapFiles(snap) }
+    return (await scanOnce()).map(s => ({ path: s.path, mtime: s.mtime }))
+  },
   readMeta: async path => {
     const m = await Music.readMeta({ path })
     if (m.cover) m.cover = window.api.fileUrl(m.cover)
