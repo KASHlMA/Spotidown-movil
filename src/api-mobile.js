@@ -16,6 +16,10 @@ import { ytVideos } from './youtube-web.js'
 import { songKey } from './song-key.mjs'
 import { setupMobileUiWhenReady, goBack } from './mobile-ui.js'
 
+// Volumen de la música siempre al 100 % (el original): el volumen lo ponen los botones del celular.
+// renderer.js arrancaba en 66 % (el de escritorio) y se oía más bajito que en otros reproductores.
+try { localStorage.setItem('sd.volume', '1') } catch {}
+
 // android/.../MusicPlugin.java (en la compu, para ver el diseño, se puede simular con window.__musicWeb)
 const Music = registerPlugin('Music', { web: () => window.__musicWeb })
 

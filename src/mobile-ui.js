@@ -623,6 +623,34 @@ function setupCanvas() {
   }).observe(panel, { attributes: true, attributeFilter: ['class', 'hidden'] })
 }
 
+// ── Animaciones suaves y rápidas (como Spotify) ──
+// Abrir Reproduciendo / la fila sube desde abajo (CSS); cerrarlo baja antes de esconderse
+function setupAnimations() {
+  const panel = $('right-panel'), rpClose = $('rp-close')
+  let closing = false
+  rpClose.addEventListener('click', e => {
+    // (si ya va bajando, por ejemplo con el gesto de deslizar, que se cierre normal)
+    if (closing || panel.hidden || panel.style.transform) return
+    e.stopImmediatePropagation()
+    closing = true
+    panel.style.transition = 'transform .24s cubic-bezier(.4, 0, 1, 1)'
+    panel.style.transform = 'translateY(100%)'
+    setTimeout(() => {
+      rpClose.click()
+      closing = false
+      panel.style.transition = ''
+      panel.style.transform = ''
+    }, 230)
+  }, true)
+  // De una playlist / álbum / artista a otro la página no se esconde: la animación se repite a mano
+  const col = $('view-collection')
+  new MutationObserver(() => {
+    col.style.animation = 'none'
+    void col.offsetWidth
+    col.style.animation = ''
+  }).observe($('col-title'), { childList: true, characterData: true, subtree: true })
+}
+
 // ── Gestos ──
 // Mini reproductor: deslizar a los lados cambia de canción. Reproduciendo: deslizar hacia abajo lo cierra.
 function setupGestures() {
@@ -741,7 +769,7 @@ function setupCollection() {
 }
 
 export function setupMobileUiWhenReady() {
-  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); setupCollection(); closeOverlaysOnLink(); setupCanvas(); setupGestures(); hideSplash() }
+  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); setupCollection(); closeOverlaysOnLink(); setupCanvas(); setupGestures(); setupAnimations(); hideSplash() }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
   go()
 }
