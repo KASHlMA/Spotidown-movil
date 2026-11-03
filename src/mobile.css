@@ -278,7 +278,17 @@ html.mobile .col-hero:has(.col-cover.round) .col-title { font-size: 40px; font-w
 html.mobile .col-actions { justify-content: flex-end; gap: 18px; padding: 8px 16px 12px; }
 html.mobile .col-shuffle { order: 1; }
 html.mobile #col-play { order: 2; width: 56px; height: 56px; }
-html.mobile .col-sticky { padding-left: 64px; }
+/* Foto del artista: se desvanece abajo hacia el fondo en lugar de terminar en seco */
+html.mobile .col-cover.round { background: transparent !important; }
+html.mobile .col-cover.round img { -webkit-mask-image: linear-gradient(#000 45%, transparent); mask-image: linear-gradient(#000 45%, transparent); }
+html.mobile .col-hero:has(.col-cover.round) .col-info { background: none; }
+html.mobile .col-hero:has(.col-cover.round) .col-meta { text-shadow: 0 1px 8px rgba(0,0,0,.7); }
+
+/* Al bajar: flecha a la izquierda, título y el play chico a la derecha (como Spotify) */
+html.mobile .col-sticky { padding: 0 12px 0 64px; gap: 10px; height: 60px; }
+html.mobile .col-sticky-title { flex: 1; min-width: 0; font-size: 17px; }
+html.mobile #col-sticky-play { order: 2; width: 40px; height: 40px; flex: none; }
+html.mobile .m-page-back { z-index: 7; }
 
 /* Lista de canciones: carátula, título y artista, y "⋮" a la derecha (sin número, álbum ni duración) */
 html.mobile .track-head { display: none !important; }

@@ -403,11 +403,16 @@ function setupExtras() {
 
   // Página de artista: su foto en lugar de la carátula de una canción
   new MutationObserver(async () => {
+    // (cada vez que se abre la página: al volver a un artista, la página pone otra vez la carátula)
     const cover = $('col-cover')
-    if (!cover.classList.contains('round') || cover.dataset.artist === $('col-title').textContent) return
-    const name = cover.dataset.artist = $('col-title').textContent
+    if (!cover.classList.contains('round')) return
+    const name = $('col-title').textContent
     const info = await window.api.artistInfo?.(name)
-    if (info?.picture && cover.dataset.artist === name) cover.innerHTML = `<img src="${info.picture}" alt="">`
+    if (info?.picture && $('col-title').textContent === name && cover.classList.contains('round')
+        && cover.querySelector('img')?.src !== info.picture) {
+      cover.innerHTML = `<img src="${info.picture}" alt="" crossorigin="anonymous">`
+      window.sd.heroFromImage(info.picture)   // el fondo del color de la foto (antes: de una canción)
+    }
   }).observe($('col-title'), { childList: true, characterData: true, subtree: true })
 }
 
@@ -575,6 +580,18 @@ function setupNpLayout() {
   // (los controles y la fila de abajo se acomodan después de .np-row, dentro de este bloque)
 }
 
+// Un artista, álbum o género tocado en Reproduciendo, la letra o la fila: la página se abría
+// detrás (no se veía nada) y cada toque dejaba una página más para el "atrás". Ahora se cierra
+// lo que está encima y se ve la página.
+function closeOverlaysOnLink() {
+  document.addEventListener('click', e => {
+    if (!e.target.closest('[data-artist], [data-album], [data-genre]')) return
+    const body = document.body
+    if (body.classList.contains('m-lyrics')) document.querySelector('.m-lyr-close').click()
+    if (!$('right-panel').hidden) $('rp-close').click()
+  }, true)   // antes que el de renderer.js, que abre la página
+}
+
 // Regresar, como el "atrás" de Android: cierra lo que esté encima o va a la pantalla anterior
 export function goBack() {
   const body = document.body
@@ -631,7 +648,7 @@ function setupCollection() {
 }
 
 export function setupMobileUiWhenReady() {
-  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); setupCollection(); hideSplash() }
+  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout(); setupCollection(); closeOverlaysOnLink(); hideSplash() }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
   go()
 }
