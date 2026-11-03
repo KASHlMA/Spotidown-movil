@@ -459,7 +459,7 @@ function setupDj() {
   new MutationObserver(() => {
     const x = document.querySelector('.m-np-extra')
     if (x && btn.parentNode !== x) x.append(btn)
-  }).observe($('rp-np'), { childList: true })
+  }).observe($('rp-np'), { childList: true, subtree: true })   // la fila va dentro del bloque de arriba
 
   // Hoja "¿Qué te gustaría escuchar?"
   const sheet = document.createElement('div')
@@ -554,6 +554,19 @@ function setupDj() {
   document.querySelector('.app-layout').append(fab)
 }
 
+// Primera pantalla de Reproduciendo como Spotify: llena todo el alto, la carátula arriba y el título,
+// la barra de tiempo y los botones abajo; la letra y el artista aparecen al deslizar
+function setupNpLayout() {
+  const np = $('rp-np')
+  const top = document.createElement('div')
+  top.className = 'm-np-top'
+  const gap = document.createElement('div')
+  gap.className = 'm-np-gap'
+  np.prepend(top)
+  top.append(np.querySelector('.np-media'), gap, ...[np.querySelector('.m-lyr-now'), np.querySelector('.np-row')].filter(Boolean))
+  // (los controles y la fila de abajo se acomodan después de .np-row, dentro de este bloque)
+}
+
 // Regresar, como el "atrás" de Android: cierra lo que esté encima o va a la pantalla anterior
 export function goBack() {
   const body = document.body
@@ -575,7 +588,7 @@ export function goBack() {
 }
 
 export function setupMobileUiWhenReady() {
-  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj() }
+  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj(); setupNpLayout() }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
   go()
 }

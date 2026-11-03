@@ -493,3 +493,26 @@ html.mobile body.rp-np .m-dj-fab, html.mobile body.m-queue .m-dj-fab, html.mobil
 html.mobile body:has(#right-panel:not([hidden])) .m-dj-fab { display: none; }
 /* Que la última fila de las listas no quede tapada por el botón */
 html.mobile .home-content, html.mobile #song-list, html.mobile .lib-list { padding-bottom: 80px; }
+
+/* ── Reproduciendo como Spotify: la primera pantalla llena el alto ── */
+html.mobile .m-np-top {
+  display: flex; flex-direction: column;
+  min-height: calc(100dvh - 72px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+html.mobile .m-np-top .np-media { flex: none; margin-top: 10px; }
+html.mobile .m-np-gap { flex: 1; min-height: 16px; }
+html.mobile .m-np-top .np-row { margin: 0 0 14px !important; }
+/* Más grande: título, artista, barra y botones */
+html.mobile #rp-np .np-title, html.mobile .m-dj-label b { font-size: 25px; }
+html.mobile #rp-np .np-artist, html.mobile .m-dj-label span { font-size: 17px; }
+html.mobile .m-host .bar-center { gap: 18px; margin: 4px 0 0; }
+html.mobile .m-host .bar-seek .slider-track { height: 5px; }
+html.mobile .m-host .bar-seek > span { font-size: 13px; }
+html.mobile #rp-np .bar-controls .bar-btn { width: 56px; height: 56px; }
+html.mobile #rp-np .bar-controls .bar-btn svg { width: 32px; height: 32px; }
+html.mobile #rp-np .bar-play-btn { width: 78px !important; height: 78px !important; }
+html.mobile #rp-np .bar-play-btn svg { width: 34px !important; height: 34px !important; }
+html.mobile .m-np-top .m-np-extra { margin: 14px 0 18px; }
+html.mobile .m-np-extra .bar-btn svg { width: 26px; height: 26px; }
+/* Lo de abajo (letra, artista) ya fuera de la primera pantalla */
+html.mobile #rp-np .np-lyrics { margin-top: 8px; }
