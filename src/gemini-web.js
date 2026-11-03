@@ -7,6 +7,8 @@ import { postJson, toBase64, fromBase64, concat, sha1 } from './store.js'
 const API        = 'https://generativelanguage.googleapis.com/v1beta/models/'
 const LIVE_URL   = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent'
 const TEXT_MODEL = 'gemini-flash-lite-latest'
+// Si se acaba el límite diario del principal, el texto sigue con éste (la voz no cambia)
+const TEXT_MODELS = [TEXT_MODEL, 'gemini-3.1-flash-lite']
 const LIVE_MODEL = 'gemini-2.5-flash-native-audio-latest'
 const VOICE      = 'Laomedeia'
 const liveSystem = script => 'Eres DJ Nat, una locutora de radio mexicana de 25 años: muy expresiva, cálida, juguetona, ' +
@@ -257,12 +259,26 @@ export function createGemini() {
 
   // Tope diario igual que en escritorio
   const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
-  const readCount = () => { try { const c = JSON.parse(localStorage.getItem('sd.geminiCount') || '{}'); return c.day === today() ? c : { day: today(), n: 0 } } catch { return { day: today(), n: 0 } } }
-  const spend = () => { const c = readCount(); c.n++; localStorage.setItem('sd.geminiCount', JSON.stringify(c)) }
-  const used = () => readCount().n
+  // { day, n: { modelo: usadas }, out: { modelo: true si Google dijo que se acabó } }
+  const readCount = () => {
+    let c
+    try { c = JSON.parse(localStorage.getItem('sd.geminiCount') || '{}') } catch { c = {} }
+    if (c.day !== today()) c = { day: today() }
+    if (typeof c.n !== 'object') c.n = typeof c.n === 'number' ? { [TEXT_MODEL]: c.n } : {}
+    c.out = c.out || {}
+    return c
+  }
+  const writeCount = c => localStorage.setItem('sd.geminiCount', JSON.stringify(c))
+  const spend = m => { const c = readCount(); c.n[m] = (c.n[m] || 0) + 1; writeCount(c) }
+  const exhausted = m => { const c = readCount(); c.out[m] = true; writeCount(c) }
+  const used = () => Object.values(readCount().n).reduce((a, b) => a + b, 0)
+
+  // Cada modelo tiene su propio límite de 500 al día: cuando el principal llega al tope (o
+  // Google dice que ya se acabó), sigue el de respaldo. La voz es otro modelo: no cambia.
+  const pick = urgent => TEXT_MODELS.find(m => !readCount().out[m] && (readCount().n[m] || 0) < (urgent ? 480 : 380))
 
   function think(system, prompt, schema, urgent = false) {
-    if (used() >= (urgent ? 480 : 380)) return Promise.reject(new Error('budget'))
+    if (!pick(urgent)) return Promise.reject(new Error('budget'))
     const body = {
       systemInstruction: { parts: [{ text: system }] },
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -273,15 +289,18 @@ export function createGemini() {
       let done = false, running = 0, hedged = false
       const finish = (fn, v) => { if (done) return; done = true; clearTimeout(hedgeTimer); clearTimeout(giveUpTimer); fn(v) }
       const launch = () => {
+        const model = pick(urgent)
+        if (!model) return finish(reject, new Error('budget'))
         running++
-        spend()
-        request(TEXT_MODEL, body).then(j => {
+        spend(model)
+        request(model, body).then(j => {
           const text = j.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('').trim()
           if (!text) throw new Error('network')
           finish(resolve, schema ? JSON.parse(text) : text)
         }).catch(e => {
           running--
           if (done) return
+          if (e.message === 'quota') { exhausted(model); if (pick(urgent)) return launch() }
           if (e.message === 'quota' || e.message === 'invalid-key') return finish(reject, e)
           if (!hedged && urgent) { hedged = true; launch() }
           else if (!hedged) finish(reject, e)
