@@ -396,3 +396,63 @@ html.mobile .m-artist-card:not([hidden]) { display: block; border-radius: 8px; o
   align-self: flex-start; margin-top: 6px; height: 34px; padding: 0 16px; border-radius: 17px;
   border: 1px solid #7c7c7c; color: #fff; font-size: 14px; font-weight: 700;
 }
+
+/* ── DJ Nat como el DJ de Spotify ── */
+/* Arriba "DJ" y la vibra; mientras habla, el orbe grande en lugar de la carátula */
+html.mobile body.m-djmode.rp-np #rp-title::before { content: 'DJ'; font-size: 13px; font-weight: 700; color: #fff; }
+html.mobile body.m-djmode.rp-np #rp-title { font-weight: 400; color: rgba(255,255,255,.8); }
+.m-dj-label { display: none; }
+html.mobile body.m-dj-talk #rp-np .np-text { display: none; }
+html.mobile body.m-dj-talk #rp-np .m-dj-label { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.m-dj-label b { font-size: 22px; }
+.m-dj-label span { font-size: 16px; color: rgba(255,255,255,.7); }
+html.mobile body.m-dj-talk #rp-np .np-cover, html.mobile body.m-dj-talk #rp-np .np-canvas,
+html.mobile body.m-dj-talk #rp-np .np-switch { visibility: hidden; }
+html.mobile body.m-dj-talk.rp-np .rightpanel { background: linear-gradient(#5a0a14, #2a070b 70%, var(--panel)); }
+html.mobile #rp-np .np-media .dj-orb {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center;
+}
+html.mobile #rp-np .np-media .dj-orb canvas { width: 92%; height: 92%; }
+html.mobile body.m-dj-talk #rp-np .m-lyr-now, html.mobile body.m-dj-talk #rp-np .np-row .like-btn { display: none !important; }
+
+/* Botón del DJ abajo a la derecha */
+.m-dj-btn { display: none; }
+html.mobile body.m-djmode .m-dj-btn {
+  display: flex; width: 44px; height: 44px; border-radius: 50%; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.12);
+}
+html.mobile .m-dj-btn .mini-orb { width: 26px; height: 26px; opacity: 1; }
+html.mobile body.m-djmode .m-np-extra #btn-queue { margin-left: auto; margin-right: 12px; }
+
+/* Hoja "¿Qué te gustaría escuchar?" */
+.m-dj-sheet { display: none; }
+html.mobile .m-dj-sheet:not([hidden]) {
+  display: flex; flex-direction: column; position: fixed; inset: 0; z-index: 70;
+  background: linear-gradient(#8c1222, #4a0912 75%); padding: calc(10px + env(safe-area-inset-top)) 0 0;
+}
+.m-dj-now { display: flex; align-items: center; gap: 12px; padding: 4px 16px 14px; border-bottom: 2px solid rgba(255,255,255,.25); }
+.m-dj-now[hidden] { display: none; }
+.m-dj-now-cover { width: 48px; height: 48px; border-radius: 4px; overflow: hidden; background: rgba(0,0,0,.3); flex-shrink: 0; }
+.m-dj-now-cover img { width: 100%; height: 100%; object-fit: cover; }
+.m-dj-now-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.m-dj-now-text b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-dj-now-text span { font-size: 13px; color: rgba(255,255,255,.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-dj-now-play { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #fff; }
+.m-dj-now-play svg { width: 26px; height: 26px; }
+.m-dj-sheet h2 { font-size: 26px; font-weight: 700; padding: 28px 16px 0; flex: 1; }
+.m-dj-chips { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 16px; scrollbar-width: none; }
+.m-dj-chips::-webkit-scrollbar { display: none; }
+.m-dj-chips button {
+  flex: 0 0 150px; min-height: 76px; padding: 12px; border-radius: 8px; text-align: left; font-size: 14px; line-height: 1.3;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.22); color: #fff;
+}
+.m-dj-chips .m-dj-chip-switch { flex-basis: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-weight: 700; text-align: center; background: rgba(255,255,255,.16); }
+.m-dj-chips .mini-orb { width: 26px; height: 26px; opacity: 1; }
+.m-dj-ask {
+  display: flex; align-items: center; gap: 10px; margin: 0; padding: 14px 16px calc(18px + env(safe-area-inset-bottom));
+  background: rgba(0,0,0,.25); border-radius: 16px 16px 0 0;
+}
+.m-dj-ask input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: #fff; font: inherit; font-size: 16px; height: 44px; }
+.m-dj-ask input::placeholder { color: rgba(255,255,255,.65); }
+.m-dj-mic { width: 44px; height: 44px; border-radius: 50%; background: #fff; color: #000; display: flex; align-items: center; justify-content: center; }
+.m-dj-mic svg { width: 24px; height: 24px; }

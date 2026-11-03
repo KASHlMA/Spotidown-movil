@@ -1,3 +1,4 @@
+import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 // Pantalla de celular al estilo de la app de Spotify, encima de la interfaz de escritorio:
 // barra de abajo (Inicio, Buscar, Tu biblioteca, DJ Nat), pestaña Buscar con "Explorar todo",
 // mini reproductor del color de la portada y "Reproduciendo" a pantalla completa.
@@ -409,9 +410,138 @@ function setupExtras() {
   }).observe($('col-title'), { childList: true, characterData: true, subtree: true })
 }
 
+// ── DJ Nat como el DJ de Spotify ──
+// Sin chat: el DJ se ve en Reproduciendo (orbe grande mientras habla, "DJ" + la vibra arriba) y
+// el botón del DJ abre la hoja "¿Qué te gustaría escuchar?" con sugerencias y el micrófono.
+const MOOD_PHRASE = { 'm-triste': 'tristes pa la noche', 'm-bailar': 'para bailar', 'm-peda': 'pa la peda',
+  'm-romance': 'románticas', 'm-chill': 'tranquilas', 'm-energia': 'con energía', 'm-feliz': 'alegres' }
+function setupDj() {
+  const sd = window.sd, body = document.body
+  // El panel del DJ (con el texto) no se usa en el celular: se va a Reproduciendo
+  new MutationObserver(() => {
+    if (!$('right-panel').hidden && !$('rp-dj').hidden) $('btn-np').click()
+  }).observe($('rp-dj'), { attributes: true, attributeFilter: ['hidden'] })
+
+  // Mientras habla: el orbe grande en lugar de la carátula y "A continuación / DJ Nat"
+  const label = document.createElement('div')
+  label.className = 'm-dj-label'
+  label.innerHTML = '<b>A continuación</b><span>DJ Nat</span>'
+  $('rp-np').querySelector('.np-row').prepend(label)
+  const orbHome = $('dj-orb').parentNode, orbNext = $('dj-orb').nextSibling
+  let talking = false
+  setInterval(() => {
+    const d = sd.dj, ctxDj = sd.playContext?.key === 'dj:'
+    body.classList.toggle('m-djmode', d.on && (ctxDj || d.speaking || d.thinking))
+    const t = d.on && (d.speaking || d.thinking)
+    if (t !== talking) {
+      talking = t
+      body.classList.toggle('m-dj-talk', t)
+      if (t) { document.querySelector('#rp-np .np-media').append($('dj-orb')); sd.startOrb() }
+      else orbHome.insertBefore($('dj-orb'), orbNext)
+    }
+    if (body.classList.contains('rp-np') && body.classList.contains('m-djmode')) {
+      const v = d.vibe || 'DJ Nat'
+      if ($('rp-title').textContent !== v) $('rp-title').textContent = v
+    }
+  }, 250)
+
+  // Botón del DJ (abajo a la derecha en Reproduciendo, como Spotify)
+  const btn = document.createElement('button')
+  btn.className = 'm-dj-btn'
+  btn.innerHTML = '<span class="mini-orb"><i></i><i></i><i></i></span>'
+  btn.addEventListener('click', () => openSheet())
+  document.querySelector('.m-np-extra')?.append(btn)
+  // (la fila de botones de abajo se crea antes; si no, se agrega cuando aparezca)
+  new MutationObserver(() => {
+    const x = document.querySelector('.m-np-extra')
+    if (x && btn.parentNode !== x) x.append(btn)
+  }).observe($('rp-np'), { childList: true })
+
+  // Hoja "¿Qué te gustaría escuchar?"
+  const sheet = document.createElement('div')
+  sheet.className = 'm-dj-sheet'
+  sheet.hidden = true
+  sheet.innerHTML = `
+    <div class="m-dj-now"><div class="m-dj-now-cover"></div><div class="m-dj-now-text"><b></b><span></span></div>
+      <button class="m-dj-now-play">${icon('M8 5v14l11-7z')}</button></div>
+    <h2>¿Qué te gustaría escuchar?</h2>
+    <div class="m-dj-chips"></div>
+    <form class="m-dj-ask"><input type="text" placeholder="Escribe una solicitud en español" spellcheck="false" autocomplete="off">
+      <button type="button" class="m-dj-mic">${icon('M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z')}</button></form>`
+  body.append(sheet)
+  const input = sheet.querySelector('input')
+  const send = text => {
+    text = String(text || '').trim()
+    if (!text) return
+    closeSheet()
+    if (!sd.dj.on) sd.djStart()
+    setTimeout(() => sd.djAsk(text), sd.dj.on ? 0 : 600)
+  }
+  sheet.querySelector('form').addEventListener('submit', e => { e.preventDefault(); send(input.value) })
+  sheet.querySelector('.m-dj-now-play').addEventListener('click', () => $('btn-play').click())
+  sheet.querySelector('.m-dj-chips').addEventListener('click', e => {
+    const c = e.target.closest('button')
+    if (!c) return
+    if (c.dataset.switch) { closeSheet(); if (sd.dj.on) sd.djSwitch(); else sd.djStart(); return }
+    send(c.textContent)
+  })
+  // Micrófono: dictado de Android (pide permiso la primera vez)
+  sheet.querySelector('.m-dj-mic').addEventListener('click', async () => {
+    const SR = SpeechRecognition
+    try {
+      const p = await SR.checkPermissions()
+      if (p.speechRecognition !== 'granted') await SR.requestPermissions()
+      const r = await SR.start({ language: 'es-MX', maxResults: 1, prompt: 'Pídele algo a DJ Nat', partialResults: false, popup: true })
+      const said = r?.matches?.[0]
+      if (said) { input.value = said; send(said) }
+    } catch (e) { console.warn('dictado', e) }
+  })
+
+  // Sugerencias armadas con tu música (géneros, moods y artistas que más tienes)
+  const suggestions = () => {
+    const gg = window.getGenreGroups?.()
+    const out = []
+    if (gg) {
+      for (const g of gg.genres.slice(0, 6)) {
+        const m = gg.moods.find(m => MOOD_PHRASE[m.key] && m.songs.filter(s => g.songs.includes(s)).length >= 8 && !out.some(o => o.includes(MOOD_PHRASE[m.key])))
+        out.push(m ? `${g.name} ${MOOD_PHRASE[m.key]}` : `Puro ${g.name.toLowerCase()}`)
+      }
+    }
+    const artists = window.getGroups?.().artistList?.filter(a => a.name !== 'Artista desconocido').sort((a, b) => b.songs.length - a.songs.length) || []
+    for (const a of artists.slice(0, 3)) out.splice(1 + out.length % 3, 0, `Algo como ${a.name}`)
+    return out.slice(0, 8)
+  }
+  function openSheet() {
+    const s = sd.currentSong
+    sheet.querySelector('.m-dj-now').hidden = !s
+    if (s) {
+      sheet.querySelector('.m-dj-now-cover').innerHTML = s.cover ? `<img src="${s.cover}" alt="">` : ''
+      sheet.querySelector('.m-dj-now-text b').textContent = s.title || ''
+      sheet.querySelector('.m-dj-now-text span').textContent = s.artist || ''
+    }
+    sheet.querySelector('.m-dj-chips').innerHTML =
+      `<button data-switch="1" class="m-dj-chip-switch"><span class="mini-orb"><i></i><i></i><i></i></span>${sd.dj.on ? 'Cambia la vibra' : 'Iniciar DJ'}</button>` +
+      suggestions().map(t => `<button>${esc(t)}</button>`).join('')
+    input.value = ''
+    sheet.hidden = false
+  }
+  function closeSheet() { sheet.hidden = true; input.blur() }
+  window.__closeDjSheet = () => { if (sheet.hidden) return false; closeSheet(); return true }
+
+  // La pestaña DJ Nat: si no está prendido lo prende; luego Reproduciendo (o la hoja)
+  document.querySelector('.m-nav').addEventListener('click', e => {
+    if (e.target.closest('button')?.dataset.k !== 'dj') return
+    e.stopImmediatePropagation()
+    if (!sd.dj.on) { sd.djStart(); return }
+    if ($('right-panel').hidden || $('rp-np').hidden) $('btn-np').click()
+    else openSheet()
+  }, true)
+}
+
 // Regresar, como el "atrás" de Android: cierra lo que esté encima o va a la pantalla anterior
 export function goBack() {
   const body = document.body
+  if (window.__closeDjSheet?.()) return true
   if (!$('ctx-menu').hidden) { window.closeMenu?.(); return true }
   if (!$('settings').hidden) { window.closeSettings?.(); return true }
   if (body.classList.contains('m-lyrics')) { document.querySelector('.m-lyr-close').click(); return true }
@@ -429,7 +559,7 @@ export function goBack() {
 }
 
 export function setupMobileUiWhenReady() {
-  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras() }
+  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras(); setupDj() }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
   go()
 }
