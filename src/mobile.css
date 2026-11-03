@@ -497,7 +497,8 @@ html.mobile .home-content, html.mobile #song-list, html.mobile .lib-list { paddi
 /* ── Reproduciendo como Spotify: la primera pantalla llena el alto ── */
 html.mobile .m-np-top {
   display: flex; flex-direction: column;
-  min-height: calc(100dvh - 72px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  /* 64px menos que la pantalla: se asoma el título de la letra, como en Spotify */
+  min-height: calc(100dvh - 136px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 html.mobile .m-np-top .np-media { flex: none; margin-top: 10px; }
 html.mobile .m-np-gap { flex: 1; min-height: 16px; }
