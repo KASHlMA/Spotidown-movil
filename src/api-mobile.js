@@ -7,7 +7,8 @@
 import { Capacitor, registerPlugin } from '@capacitor/core'
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
 import { MediaSession } from '@jofr/capacitor-media-session'
-import { setupMobileUiWhenReady } from './mobile-ui.js'
+import { App } from '@capacitor/app'
+import { setupMobileUiWhenReady, goBack } from './mobile-ui.js'
 
 // android/.../MusicPlugin.java (en la compu, para ver el diseño, se puede simular con window.__musicWeb)
 const Music = registerPlugin('Music', { web: () => window.__musicWeb })
@@ -81,6 +82,9 @@ try { localStorage.setItem('sd.rightMode', 'null') } catch {}
 
 // ── Pantalla de celular (barra de abajo, Buscar, mini reproductor): mobile-ui.js ──
 setupMobileUiWhenReady()
+// Botón "atrás" de Android: cierra lo de encima o regresa; en Inicio la app se va a segundo
+// plano sin cerrarse (la música sigue), como Spotify
+if (Capacitor.isNativePlatform()) App.addListener('backButton', () => { if (!goBack()) App.minimizeApp() })
 
 window.api = {
   // Música

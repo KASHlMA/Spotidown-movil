@@ -39,7 +39,6 @@ html.mobile .view, html.mobile .scroller { -webkit-overflow-scrolling: touch; }
 html.mobile ::-webkit-scrollbar { width: 0; height: 0; }
 
 /* Botones más grandes para el dedo */
-html.mobile .tr { height: 60px; }
 html.mobile .bar-btn { width: 40px; height: 40px; }
 
 /* ── Abajo: mini reproductor (como Spotify) ── */
@@ -246,3 +245,73 @@ html.mobile #rp-np #btn-next, html.mobile #rp-np #btn-repeat { display: flex; }
 /* Letra más legible, como Spotify */
 html.mobile .lyric-line, html.mobile .lyric-line.past { color: rgba(255,255,255,.78); }
 html.mobile .lyric-line.cur { color: #fff; }
+
+/* ── Páginas de playlist, álbum, género y artista como Spotify ── */
+.m-page-back { display: none; }
+html.mobile .m-page-back {
+  display: flex; position: absolute; top: 10px; left: 12px; z-index: 6; width: 40px; height: 40px;
+  border-radius: 50%; background: rgba(0,0,0,.45); color: #fff; align-items: center; justify-content: center;
+}
+html.mobile .m-page-back svg { width: 24px; height: 24px; }
+html.mobile #view-collection { position: relative; }
+/* Carátula centrada arriba y el título abajo a la izquierda */
+html.mobile .col-hero {
+  flex-direction: column; align-items: stretch; gap: 14px; min-height: 0; padding: 56px 16px 4px;
+  background-image: linear-gradient(transparent 0%, var(--panel) 100%);
+}
+html.mobile .col-cover { width: min(62vw, 260px); height: min(62vw, 260px); align-self: center; border-radius: 4px; }
+html.mobile .col-type { display: none; }
+html.mobile .col-title, html.mobile .col-title.mid, html.mobile .col-title.long {
+  font-size: 24px; font-weight: 700; letter-spacing: -.3px; margin: 0; -webkit-line-clamp: 2;
+}
+html.mobile .col-meta { font-size: 13px; }
+/* Artista: la foto a todo lo ancho con el nombre encima */
+html.mobile .col-hero:has(.col-cover.round) { padding: 0; position: relative; gap: 0; }
+html.mobile .col-hero:has(.col-cover.round) .col-cover {
+  width: 100%; height: 330px; border-radius: 0; box-shadow: none;
+}
+html.mobile .col-hero:has(.col-cover.round) .col-info {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 60px 16px 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,.55));
+}
+html.mobile .col-hero:has(.col-cover.round) .col-title { font-size: 40px; font-weight: 800; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+/* Aleatorio y el play grande a la derecha */
+html.mobile .col-actions { justify-content: flex-end; gap: 18px; padding: 8px 16px 12px; }
+html.mobile .col-shuffle { order: 1; }
+html.mobile #col-play { order: 2; width: 56px; height: 56px; }
+html.mobile .col-sticky { padding-left: 64px; }
+
+/* Lista de canciones: carátula, título y artista, y "⋮" a la derecha (sin número, álbum ni duración) */
+html.mobile .track-head { display: none !important; }
+html.mobile .tr { grid-template-columns: minmax(0, 1fr) 40px; gap: 8px; padding: 0 8px 0 16px; border-radius: 0; }
+html.mobile .tr-num, html.mobile .tr-album { display: none; }
+html.mobile .tr-end > * { display: none !important; }
+html.mobile .tr-end::after { content: '⋮'; font-size: 22px; color: var(--t2); width: 40px; text-align: center; }
+html.mobile .tr-thumb { width: 48px; height: 48px; }
+html.mobile .tr-title { font-size: 16px; }
+html.mobile .tr-artist { font-size: 13px; }
+html.mobile .tr.selected { background: transparent; }
+
+/* Menú de canción como hoja desde abajo */
+html.mobile body.m-sheet::after {
+  content: ''; position: fixed; inset: 0; z-index: 99; background: rgba(0,0,0,.6);
+}
+html.mobile .ctx-menu {
+  left: 0 !important; right: 0; top: auto !important; bottom: 0; max-width: none; min-width: 0;
+  border-radius: 12px 12px 0 0; padding: 8px 8px calc(16px + env(safe-area-inset-bottom)); background: #242424;
+}
+html.mobile .ctx-menu button { padding: 15px 14px; font-size: 16px; }
+.m-sheet-head { display: flex; align-items: center; gap: 12px; padding: 10px 14px 14px; border-bottom: 1px solid #3a3a3a; margin-bottom: 6px; }
+.m-sheet-cover { width: 48px; height: 48px; border-radius: 4px; overflow: hidden; background: #333; flex-shrink: 0; }
+.m-sheet-cover img { width: 100%; height: 100%; object-fit: cover; }
+.m-sheet-head div:last-child { display: flex; flex-direction: column; min-width: 0; }
+.m-sheet-head b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-sheet-head span { font-size: 13px; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Lo que no tiene el Spotify del celular */
+html.mobile #rp-np .np-genres, html.mobile #np-next-card, html.mobile #np-radio, html.mobile .lib-status { display: none !important; }
+/* Páginas: sin la barra de arriba (la flecha va sobre la carátula) y la lista pegada a la orilla */
+html.mobile body.m-sub .topbar { display: none; }
+html.mobile .col-body { padding: 0; }
+html.mobile #song-list { margin: 0; padding: 0; }
+html.mobile body.m-nosong .player-bar { display: none; }

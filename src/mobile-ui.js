@@ -162,6 +162,10 @@ function setupMobileUi() {
     const inLyr = !lyr.hidden
     body.classList.toggle('rp-np', inNp)
     body.classList.toggle('m-lyrics', inLyr)
+    // En las páginas (playlist, álbum, artista…) arriba sólo va la flecha, como Spotify
+    body.classList.toggle('m-sub', !$('view-collection').hidden)
+    // Sin nada sonando no hay mini reproductor (el corazón sólo aparece con una canción)
+    body.classList.toggle('m-nosong', $('bar-like').hidden && !inNp)
     if (inLyr) {
       lyrHead.querySelector('b').textContent = $('np-title').textContent
       lyrHead.querySelector('span').textContent = $('np-artist').textContent
@@ -173,7 +177,56 @@ function setupMobileUi() {
   sync()
 }
 
+// ── Páginas de playlist / álbum / artista / género, menú de canción y "atrás" ──
+// (como Spotify: flecha para regresar, "⋮" en cada canción y el menú como hoja desde abajo)
+function setupPages() {
+  const body = document.body
+  // Flecha de regresar arriba a la izquierda de cada página
+  const back = document.createElement('button')
+  back.className = 'm-page-back'
+  back.innerHTML = icon('M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z')
+  back.addEventListener('click', () => goBack())
+  $('view-collection').prepend(back)
+
+  // "⋮" de cada canción (es la orilla derecha de la fila): abre su menú
+  $('song-list').addEventListener('click', e => {
+    const li = e.target.closest('.tr')
+    if (!li || e.clientX < li.getBoundingClientRect().right - 52) return
+    e.preventDefault()
+    e.stopPropagation()
+    li.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: e.clientX, clientY: e.clientY }))
+  }, true)
+
+  // Menú de canción: arriba la canción (carátula, título, artista) y un fondo oscuro detrás
+  const menu = $('ctx-menu')
+  new MutationObserver(() => {
+    const open = !menu.hidden
+    body.classList.toggle('m-sheet', open)
+    if (!open || !menu._song || menu.querySelector('.m-sheet-head')) return
+    const s = menu._song
+    const head = document.createElement('div')
+    head.className = 'm-sheet-head'
+    head.innerHTML = `<div class="m-sheet-cover">${s.cover ? `<img src="${s.cover}" alt="">` : ''}</div>
+      <div><b>${esc(s.title || '')}</b><span>${esc(s.artist || '')}</span></div>`
+    menu.prepend(head)
+  }).observe(menu, { attributes: true, attributeFilter: ['hidden'] })
+}
+
+// Regresar, como el "atrás" de Android: cierra lo que esté encima o va a la pantalla anterior
+export function goBack() {
+  const body = document.body
+  if (!$('ctx-menu').hidden) { window.closeMenu?.(); return true }
+  if (!$('settings').hidden) { window.closeSettings?.(); return true }
+  if (body.classList.contains('m-lyrics')) { document.querySelector('.m-lyr-close').click(); return true }
+  if (!$('right-panel').hidden) { $('rp-close').click(); return true }
+  if (body.classList.contains('show-lib')) { document.querySelector('.m-nav [data-k=home]').click(); return true }
+  if ($('view-home').hidden && !$('btn-back').disabled) { $('btn-back').click(); return true }
+  if ($('view-home').hidden) { window.navigate({ name: 'home' }); return true }
+  return false   // ya no hay a dónde regresar: la app se va a segundo plano (sigue sonando)
+}
+
 export function setupMobileUiWhenReady() {
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupMobileUi)
-  else setupMobileUi()
+  const go = () => { setupMobileUi(); setupPages() }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
+  go()
 }
