@@ -21,10 +21,26 @@ index e273185..5067b64 100644
 +    }
  }
 diff --git a/node_modules/@jofr/capacitor-media-session/android/src/main/java/io/github/jofr/capacitor/mediasessionplugin/MediaSessionPlugin.java b/node_modules/@jofr/capacitor-media-session/android/src/main/java/io/github/jofr/capacitor/mediasessionplugin/MediaSessionPlugin.java
-index 6f54b7f..e61503a 100644
+index 6f54b7f..0730b02 100644
 --- a/node_modules/@jofr/capacitor-media-session/android/src/main/java/io/github/jofr/capacitor/mediasessionplugin/MediaSessionPlugin.java
 +++ b/node_modules/@jofr/capacitor-media-session/android/src/main/java/io/github/jofr/capacitor/mediasessionplugin/MediaSessionPlugin.java
-@@ -153,6 +153,16 @@ public class MediaSessionPlugin extends Plugin {
+@@ -83,7 +83,14 @@ public class MediaSessionPlugin extends Plugin {
+ 
+     public void startMediaService() {
+         Intent intent = new Intent(getActivity(), MediaSessionService.class);
+-        ContextCompat.startForegroundService(getContext(), intent);
++        // Spotidown: Android 12+ no deja arrancar el servicio con la app en segundo plano (y cerraba la app);
++        // se intenta otra vez en el siguiente cambio de estado, ya con la app al frente
++        try {
++            ContextCompat.startForegroundService(getContext(), intent);
++        } catch (IllegalStateException e) {
++            Log.w(TAG, "No se pudo iniciar el servicio en segundo plano", e);
++            return;
++        }
+         getContext().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+     }
+ 
+@@ -153,6 +160,16 @@ public class MediaSessionPlugin extends Plugin {
          }
      }
  

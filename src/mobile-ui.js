@@ -458,13 +458,15 @@ function setupDj() {
   barDj.innerHTML = '<span class="mini-orb"><i></i><i></i><i></i></span><div class="m-bar-dj-text"><b>DJ Nat</b><span></span></div>'
   $('bar-cover').parentNode.prepend(barDj)
   const barDjSub = barDj.querySelector('.m-bar-dj-text span')
-  let talking = false
+  let talking = false, djBusy = false
   setInterval(() => {
     const sub = sd.dj.thinking ? 'Preparando lo que sigue…' : sd.dj.vibe ? `Hablando · ${sd.dj.vibe}` : 'Hablando'
     if (barDjSub.textContent !== sub) barDjSub.textContent = sub
     const d = sd.dj, ctxDj = sd.playContext?.key === 'dj:'
     body.classList.toggle('m-djmode', d.on && (ctxDj || d.speaking || d.thinking))
     body.classList.toggle('m-dj-on', !!d.on)   // (el orbe sólo se anima con el DJ prendido)
+    const busy = !!d.on && (d.thinking || d.speaking) && $('audio').paused
+    if (busy !== djBusy) { djBusy = busy; window.api.djBusy?.(busy) }
     const t = d.on && (d.speaking || d.thinking)
     if (t !== talking) {
       talking = t

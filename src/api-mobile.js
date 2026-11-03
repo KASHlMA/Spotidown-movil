@@ -129,6 +129,15 @@ const mediaSessionShim = {
   setPositionState(p) { if (started) MediaSession.setPositionState(p || {}).catch(() => {}) },
 }
 
+// Si sales de la app con la música en pausa, se quita la notificación (y la isla): antes se quedaba
+// la canción ahí como si siguiera sonando. Al darle play otra vez vuelve a salir. (Si pausas desde
+// la notificación con la app cerrada, se queda para que puedas volver a darle play.)
+document.addEventListener('visibilitychange', () => {
+  const audio = document.getElementById('audio')
+  if (!document.hidden || !started || !audio?.paused || window.sd?.dj?.on) return
+  MediaSession.setPlaybackState({ playbackState: 'none' }).catch(() => {})
+})
+
 // Botones extra de la notificación, a la derecha (MediaSessionService.java, parche en patches/):
 // aleatorio (con puntito si está prendido) y DJ (si está sonando el DJ cambia la vibra; si no, lo arranca)
 function setupExtraButtons() {
@@ -226,6 +235,16 @@ window.api = {
   scanMusic: async () => {
     if (fastFiles) { fastFiles = false; checkLater(); return snapFiles(snap) }
     return (await scanOnce()).map(s => ({ path: s.path, mtime: s.mtime }))
+  },
+  // DJ preparando / hablando sin música todavía: notificación "DJ Nat" y la app despierta (si no,
+  // con la pantalla apagada Android la dormía y no ponía nada hasta prenderla)
+  djBusy: on => {
+    Music.keepAwake({ on }).catch(() => {})
+    const audio = document.getElementById('audio')
+    if (on) {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: 'DJ Nat', artist: 'Preparando tu música', album: 'Spotidown' })
+      navigator.mediaSession.playbackState = 'playing'
+    } else if (audio.paused) navigator.mediaSession.playbackState = 'paused'
   },
   // Carátula grande para Reproduciendo y las portadas (covers-hd.js)
   hdCover: song => hdCover(Music, song, window.api.fileUrl),

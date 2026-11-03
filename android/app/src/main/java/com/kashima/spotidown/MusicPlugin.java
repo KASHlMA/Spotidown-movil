@@ -129,6 +129,23 @@ public class MusicPlugin extends Plugin {
         }).start();
     }
 
+    // Mientras el DJ prepara lo que va a decir todavía no suena nada: con la pantalla apagada Android
+    // dormía la app y la frase y la música salían hasta que la volvías a prender. Esto la mantiene
+    // despierta (máximo 1 minuto por vez).
+    private android.os.PowerManager.WakeLock djLock;
+    @PluginMethod
+    public void keepAwake(PluginCall call) {
+        boolean on = Boolean.TRUE.equals(call.getBoolean("on", false));
+        if (djLock == null) {
+            android.os.PowerManager pm = (android.os.PowerManager) getContext().getSystemService(android.content.Context.POWER_SERVICE);
+            djLock = pm.newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "spotidown:dj");
+            djLock.setReferenceCounted(false);
+        }
+        if (on) djLock.acquire(60_000);
+        else if (djLock.isHeld()) djLock.release();
+        call.resolve();
+    }
+
     private static volatile boolean pregenRunning = false;
     private void pregenCovers(JSArray songs) {
         if (pregenRunning) return;
