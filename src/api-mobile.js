@@ -4,7 +4,7 @@
 // Fase 1: música del celular, carátulas y letras, caché, reproducción con pantalla apagada y
 // controles en la notificación. Lo demás (Last.fm, DJ Nat, clima, Canvas) responde como "sin
 // configurar" hasta portarlo, así la app funciona completa sin esas partes.
-import { Capacitor, registerPlugin } from '@capacitor/core'
+import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core'
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
 import { MediaSession } from '@jofr/capacitor-media-session'
 import { App } from '@capacitor/app'
@@ -136,6 +136,27 @@ window.api = {
   djChatLog: () => {},
   onDjChunk: cb => listeners.djChunk.push(cb),
   weather: async () => null,
+
+  // Foto y fans del artista (Deezer, sin key): para "Acerca del artista" y la página de artista.
+  // Se guarda por artista: cada uno se busca una sola vez (30 días)
+  artistInfo: async name => {
+    const key = 'sd.artistInfo'
+    let cache = {}
+    try { cache = JSON.parse(localStorage.getItem(key) || '{}') } catch {}
+    const k = String(name || '').toLowerCase().trim()
+    if (!k) return null
+    const c = cache[k]
+    if (c && Date.now() - c.at < 30 * 864e5) return c.info
+    try {
+      const r = await CapacitorHttp.get({ url: 'https://api.deezer.com/search/artist?limit=1&q=' + encodeURIComponent(name) })
+      const a = (typeof r.data === 'string' ? JSON.parse(r.data) : r.data)?.data?.[0]
+      const same = x => x.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '')
+      const info = a && same(a.name) === same(k) ? { name: a.name, picture: a.picture_xl, fans: a.nb_fan } : null
+      cache[k] = { info, at: Date.now() }
+      localStorage.setItem(key, JSON.stringify(cache))
+      return info
+    } catch { return null }   // sin internet
+  },
 
   // Fase 3: Canvas
   ytVideos: async () => [],

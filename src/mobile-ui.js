@@ -336,6 +336,79 @@ function setupNowPlaying() {
   })
 }
 
+// ── Tarjeta de la letra que avanza con la canción y "Acerca del artista" ──
+let libPage = null   // página abierta desde Tu biblioteca: "atrás" regresa a la biblioteca
+function setupExtras() {
+  const sd = window.sd
+  $('lib-list').addEventListener('click', () => setTimeout(() => { libPage = $('col-title').textContent }, 300))
+
+  // Letra: la tarjeta trae la letra completa y va bajando sola. Con tiempos marca la línea
+  // que suena; sin tiempos avanza parejo con la canción (aproximado)
+  const box = $('np-lyrics-text')
+  let built = '', lines = []
+  const build = () => {
+    const src = [...$('lyrics-inner').querySelectorAll('.lyric-line')].map(e => e.textContent)
+    const sig = sd.currentSong?.path + '|' + src.length
+    // La app vuelve a escribir la muestra de 4 líneas en cada canción (aunque se repita)
+    if (!src.length || (sig === built && box.children.length === src.length)) return
+    built = sig
+    box.innerHTML = src.map(t => `<div>${esc(t)}</div>`).join('')
+    lines = [...box.children]
+    box.scrollTop = 0
+  }
+  new MutationObserver(build).observe($('lyrics-inner'), { childList: true })
+  let last = -2
+  $('audio').addEventListener('timeupdate', () => {
+    if (!lines.length || !document.body.classList.contains('rp-np')) return
+    const a = $('audio')
+    const synced = sd.lyricLines.length > 0
+    const idx = synced ? sd.lyricIdx : -1
+    if (synced && idx !== last) {
+      last = idx
+      lines.forEach((l, i) => l.classList.toggle('cur', i === idx))
+      if (idx >= 0) box.scrollTo({ top: lines[idx].offsetTop - box.offsetTop - 8, behavior: 'smooth' })
+    } else if (!synced && a.duration) {
+      box.scrollTop = (box.scrollHeight - box.clientHeight) * (a.currentTime / a.duration)
+    }
+  })
+
+  // "Acerca del artista": foto, nombre, fans y cuántas canciones suyas tienes
+  const card = document.createElement('div')
+  card.className = 'm-artist-card'
+  card.hidden = true
+  $('np-lyrics').after(card)
+  let shownFor = ''
+  const fillArtist = async () => {
+    const s = sd.currentSong
+    const name = (s?.artist || '').split(/\s*,\s*/)[0]
+    if (!name || name === shownFor) return
+    shownFor = name
+    const info = await window.api.artistInfo?.(name)
+    if (shownFor !== name) return
+    const mine = sd.allSongs.filter(x => (x.artist || '').toLowerCase().includes(name.toLowerCase())).length || 0
+    card.hidden = false
+    card.innerHTML = `<div class="m-artist-pic">${info?.picture ? `<img src="${info.picture}" alt="">` : ''}<span>Acerca del artista</span></div>
+      <div class="m-artist-body"><b>${esc(name)}</b>
+      <span>${info?.fans ? info.fans.toLocaleString('es-MX') + ' fans en Deezer · ' : ''}${mine} ${mine === 1 ? 'canción' : 'canciones'} en tu biblioteca</span>
+      <button class="m-artist-go">Ver artista</button></div>`
+    card.querySelector('.m-artist-go').onclick = () => {
+      $('rp-close').click()
+      window.navigate({ name: 'artist', key: name.toLowerCase() })
+    }
+  }
+  $('audio').addEventListener('play', fillArtist)
+  new MutationObserver(fillArtist).observe($('np-title'), { childList: true, characterData: true, subtree: true })
+
+  // Página de artista: su foto en lugar de la carátula de una canción
+  new MutationObserver(async () => {
+    const cover = $('col-cover')
+    if (!cover.classList.contains('round') || cover.dataset.artist === $('col-title').textContent) return
+    const name = cover.dataset.artist = $('col-title').textContent
+    const info = await window.api.artistInfo?.(name)
+    if (info?.picture && cover.dataset.artist === name) cover.innerHTML = `<img src="${info.picture}" alt="">`
+  }).observe($('col-title'), { childList: true, characterData: true, subtree: true })
+}
+
 // Regresar, como el "atrás" de Android: cierra lo que esté encima o va a la pantalla anterior
 export function goBack() {
   const body = document.body
@@ -344,13 +417,19 @@ export function goBack() {
   if (body.classList.contains('m-lyrics')) { document.querySelector('.m-lyr-close').click(); return true }
   if (!$('right-panel').hidden) { $('rp-close').click(); return true }
   if (body.classList.contains('show-lib')) { document.querySelector('.m-nav [data-k=home]').click(); return true }
+  // Página abierta desde Tu biblioteca: regresa a la biblioteca
+  if (libPage && !$('view-collection').hidden && $('col-title').textContent === libPage) {
+    libPage = null
+    document.querySelector('.m-nav [data-k=lib]').click()
+    return true
+  }
   if ($('view-home').hidden && !$('btn-back').disabled) { $('btn-back').click(); return true }
   if ($('view-home').hidden) { window.navigate({ name: 'home' }); return true }
   return false   // ya no hay a dónde regresar: la app se va a segundo plano (sigue sonando)
 }
 
 export function setupMobileUiWhenReady() {
-  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying() }
+  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying(); setupExtras() }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
   go()
 }

@@ -376,3 +376,23 @@ html.mobile .m-toast {
 html.mobile .m-toast.on { opacity: 1; transform: translate(-50%, 0); }
 /* Cualquier panel a pantalla completa (fila, DJ): sin la barra de arriba */
 html.mobile body:has(#right-panel:not([hidden])) .topbar { display: none; }
+
+/* Tarjeta de la letra: se mueve con la canción (marca la línea que suena) */
+html.mobile .np-lyrics { cursor: default; }
+html.mobile .np-lyrics-text { max-height: 230px; overflow: hidden; scroll-behavior: auto; }
+html.mobile .np-lyrics-text div { color: rgba(255,255,255,.6); transition: color .3s; }
+html.mobile .np-lyrics-text div.cur { color: #fff; }
+
+/* Acerca del artista (como Spotify) */
+.m-artist-card { display: none; }
+html.mobile .m-artist-card:not([hidden]) { display: block; border-radius: 8px; overflow: hidden; background: #2a2a2a; margin-bottom: 16px; }
+.m-artist-pic { position: relative; height: 220px; background: #333; }
+.m-artist-pic img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+.m-artist-pic span { position: absolute; left: 16px; top: 14px; font-size: 15px; font-weight: 700; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+.m-artist-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; }
+.m-artist-body b { font-size: 18px; }
+.m-artist-body span { font-size: 13px; color: var(--t2); }
+.m-artist-go {
+  align-self: flex-start; margin-top: 6px; height: 34px; padding: 0 16px; border-radius: 17px;
+  border: 1px solid #7c7c7c; color: #fff; font-size: 14px; font-weight: 700;
+}
