@@ -164,6 +164,9 @@ function setupMobileUi() {
     body.classList.toggle('m-lyrics', inLyr)
     // En las páginas (playlist, álbum, artista…) arriba sólo va la flecha, como Spotify
     body.classList.toggle('m-sub', !$('view-collection').hidden)
+    const inQueue = !$('right-panel').hidden && !$('rp-queue').hidden
+    body.classList.toggle('m-queue', inQueue)
+    if (inQueue) $('rp-title').textContent = 'Fila de reproducción'
     // Sin nada sonando no hay mini reproductor (el corazón sólo aparece con una canción)
     body.classList.toggle('m-nosong', $('bar-like').hidden && !inNp)
     if (inLyr) {
@@ -189,12 +192,24 @@ function setupPages() {
   $('view-collection').prepend(back)
 
   // "⋮" de cada canción (es la orilla derecha de la fila): abre su menú
+  // Un toque pone la canción (en escritorio un clic selecciona y doble clic la pone: en el
+  // celular se sentía como si hubiera que tocar dos veces)
   $('song-list').addEventListener('click', e => {
     const li = e.target.closest('.tr')
-    if (!li || e.clientX < li.getBoundingClientRect().right - 52) return
+    if (!li || e.target.closest('.link, a')) return
     e.preventDefault()
     e.stopPropagation()
-    li.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: e.clientX, clientY: e.clientY }))
+    if (e.clientX >= li.getBoundingClientRect().right - 52)
+      li.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: e.clientX, clientY: e.clientY }))
+    else li.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+  }, true)
+
+  // "Buscar" del teclado sólo cierra el teclado (en escritorio Enter ponía la primera canción)
+  window.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.target.id !== 'search') return
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    e.target.blur()
   }, true)
 
   // Menú de canción: arriba la canción (carátula, título, artista) y un fondo oscuro detrás
@@ -212,6 +227,115 @@ function setupPages() {
   }).observe(menu, { attributes: true, attributeFilter: ['hidden'] })
 }
 
+// ── Reproduciendo y Fila de reproducción como Spotify ──
+function setupNowPlaying() {
+  const sd = window.sd
+  // "⋮" arriba a la derecha: el menú de la canción que suena
+  const more = document.createElement('button')
+  more.className = 'm-np-more'
+  more.innerHTML = icon('M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z')
+  more.addEventListener('click', () => { if (sd.currentSong) sd.openSongMenu(sd.currentSong, 0, 0) })
+  document.querySelector('.rp-header').append(more)
+
+  // La línea de la letra que va sonando, encima del título (si la letra trae tiempos)
+  const lyrNow = document.createElement('div')
+  lyrNow.className = 'm-lyr-now'
+  $('rp-np').querySelector('.np-row').before(lyrNow)
+  $('audio').addEventListener('timeupdate', () => {
+    const t = sd.lyricNow
+    if (lyrNow.textContent !== t) lyrNow.textContent = t
+  })
+
+  // Fila: la que suena con su botón de play, "≡" para reacomodar arrastrando, y abajo
+  // "Modo aleatorio" y "Temporizador"
+  const q = $('rp-queue')
+  const bar = document.createElement('div')
+  bar.className = 'm-q-bar'
+  bar.innerHTML = `<button data-q="shuffle">${icon('M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z')}<span>Modo aleatorio</span></button>
+    <button data-q="sleep">${icon('M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61 1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42A8.96 8.96 0 0 0 12 4a9 9 0 1 0 9 9c0-2.12-.74-4.07-1.97-5.61zM12 20a7 7 0 1 1 0-14 7 7 0 0 1 0 14z')}<span>Temporizador</span></button>`
+  q.append(bar)
+  bar.addEventListener('click', e => {
+    const k = e.target.closest('[data-q]')?.dataset.q
+    if (k === 'shuffle') sd.toggleShuffle()
+    if (k === 'sleep') sd.openSleepMenu()
+    markBar()
+  })
+  // Sólo cambia lo que cambió: la barra está dentro de la fila, que se vigila para decorar
+  // las canciones (si se reescribía siempre, se volvía un ciclo sin fin y la app se congelaba)
+  const markBar = () => {
+    bar.querySelector('[data-q=shuffle]').classList.toggle('on', sd.shuffle)
+    const t = sd.sleepTimer
+    bar.querySelector('[data-q=sleep]').classList.toggle('on', !!t)
+    const label = bar.querySelector('[data-q=sleep] span'), text = t ? 'Se apaga ' + t : 'Temporizador'
+    if (label.textContent !== text) label.textContent = text
+  }
+  window.addEventListener('sd-notify', markBar)
+  const playBtn = icon('M8 5v14l11-7z')
+  const handle = icon('M3 15h18v-2H3v2zm0 4h18v-2H3v2zm0-8h18V9H3v2zm0-6v2h18V5H3z')
+  const decorate = () => {
+    const now = $('queue-now').querySelector('.mini-row')
+    if (now && !now.querySelector('.m-q-play')) {
+      const b = document.createElement('button')
+      b.className = 'm-q-play'
+      b.innerHTML = playBtn
+      b.addEventListener('click', e => { e.stopPropagation(); $('btn-play').click() })
+      now.append(b)
+    }
+    $('queue-list').querySelectorAll('.mini-row').forEach((li, i) => {
+      if (li.querySelector('.m-q-handle')) return
+      const h = document.createElement('span')
+      h.className = 'm-q-handle'
+      h.innerHTML = handle
+      h.dataset.pos = i
+      li.append(h)
+    })
+    markBar()
+  }
+  new MutationObserver(decorate).observe(q, { childList: true, subtree: true })
+  setInterval(() => { if (document.body.classList.contains('m-queue')) markBar() }, 30000)   // minutos que faltan
+
+  // Reacomodar: arrastrar el "≡" de una canción a otra posición
+  let drag = null
+  $('queue-list').addEventListener('pointerdown', e => {
+    const h = e.target.closest('.m-q-handle')
+    if (!h) return
+    e.preventDefault()
+    const li = h.closest('.mini-row')
+    const rows = [...$('queue-list').children]
+    drag = { li, from: rows.indexOf(li), y0: e.clientY, rowH: li.getBoundingClientRect().height, n: rows.length }
+    li.classList.add('m-dragging')
+    h.setPointerCapture(e.pointerId)
+  })
+  $('queue-list').addEventListener('pointermove', e => {
+    if (!drag) return
+    drag.dy = e.clientY - drag.y0
+    drag.li.style.transform = `translateY(${drag.dy}px)`
+  })
+  const drop = () => {
+    if (!drag) return
+    const to = Math.max(0, Math.min(drag.n - 1, drag.from + Math.round((drag.dy || 0) / drag.rowH)))
+    drag.li.style.transform = ''
+    drag.li.classList.remove('m-dragging')
+    const { from } = drag
+    drag = null
+    sd.moveUpcoming(from, to)
+  }
+  $('queue-list').addEventListener('pointerup', drop)
+  $('queue-list').addEventListener('pointercancel', drop)
+
+  // Avisos cortos abajo ("Se agregó a la fila…")
+  const toast = document.createElement('div')
+  toast.className = 'm-toast'
+  document.body.append(toast)
+  let tt = 0
+  window.addEventListener('sd-notify', e => {
+    toast.textContent = e.detail
+    toast.classList.add('on')
+    clearTimeout(tt)
+    tt = setTimeout(() => toast.classList.remove('on'), 2500)
+  })
+}
+
 // Regresar, como el "atrás" de Android: cierra lo que esté encima o va a la pantalla anterior
 export function goBack() {
   const body = document.body
@@ -226,7 +350,7 @@ export function goBack() {
 }
 
 export function setupMobileUiWhenReady() {
-  const go = () => { setupMobileUi(); setupPages() }
+  const go = () => { setupMobileUi(); setupPages(); setupNowPlaying() }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); return }
   go()
 }

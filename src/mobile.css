@@ -315,3 +315,64 @@ html.mobile body.m-sub .topbar { display: none; }
 html.mobile .col-body { padding: 0; }
 html.mobile #song-list { margin: 0; padding: 0; }
 html.mobile body.m-nosong .player-bar { display: none; }
+/* El play de las tarjetas aparece con el mouse: en el celular estaba invisible pero se podía tocar */
+html.mobile .card-play { display: none !important; }
+
+/* ── "⋮" de Reproduciendo y la línea de la letra que suena ── */
+.m-np-more { display: none; }
+html.mobile body.rp-np .m-np-more {
+  display: flex; width: 40px; height: 40px; align-items: center; justify-content: center; color: #fff; order: -1;
+}
+html.mobile body.rp-np .m-np-more svg { width: 24px; height: 24px; }
+html.mobile body.rp-np #rp-title { margin-right: 0; }
+.m-lyr-now { display: none; }
+html.mobile .m-lyr-now:not(:empty) {
+  display: block; font-size: 17px; font-weight: 700; color: #fff; margin: 2px 0 14px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Fila de reproducción como Spotify ── */
+html.mobile body.m-queue .rightpanel { background: #121212; }
+html.mobile body.m-queue .rp-header { flex-direction: row; }
+html.mobile body.m-queue #rp-title { font-size: 22px; font-weight: 700; text-align: left; }
+html.mobile #rp-queue { padding: 0 16px 96px; }
+html.mobile #rp-queue .q-section { font-size: 14px; font-weight: 400; color: var(--t2); margin: 14px 0 6px; }
+html.mobile #rp-queue .mini-row { height: 64px; gap: 12px; padding: 4px 0; position: relative; touch-action: pan-y; }
+html.mobile #rp-queue .mini-thumb { width: 48px; height: 48px; border-radius: 2px; }
+html.mobile #rp-queue .mini-title { font-size: 16px; }
+html.mobile #rp-queue .mini-sub { font-size: 14px; }
+html.mobile #rp-queue .mini-row.now .mini-title { color: var(--accent); }
+.m-q-play, .m-q-handle { display: none; }
+html.mobile .m-q-play {
+  display: flex; margin-left: auto; width: 40px; height: 40px; border-radius: 50%; background: #fff; color: #000;
+  align-items: center; justify-content: center; flex-shrink: 0;
+}
+html.mobile .m-q-play svg { width: 20px; height: 20px; }
+html.mobile .m-q-handle {
+  display: flex; margin-left: auto; width: 44px; height: 44px; align-items: center; justify-content: center;
+  color: var(--t2); flex-shrink: 0; touch-action: none;
+}
+html.mobile .m-q-handle svg { width: 22px; height: 22px; }
+html.mobile .mini-row.m-dragging { background: #2a2a2a; z-index: 2; box-shadow: 0 6px 16px rgba(0,0,0,.5); }
+.m-q-bar { display: none; }
+html.mobile body.m-queue .m-q-bar {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; position: absolute; left: 16px; right: 16px;
+  bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 5;
+}
+.m-q-bar button {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border-radius: 8px;
+  background: #2a2a2a; color: #fff; font-size: 13px;
+}
+.m-q-bar button svg { width: 24px; height: 24px; }
+.m-q-bar button.on { color: var(--accent); }
+
+/* Avisos cortos */
+.m-toast { display: none; }
+html.mobile .m-toast {
+  display: block; position: fixed; left: 50%; bottom: 140px; z-index: 200; transform: translate(-50%, 20px);
+  max-width: calc(100% - 48px); padding: 12px 18px; border-radius: 8px; background: #fff; color: #000;
+  font-size: 14px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+}
+html.mobile .m-toast.on { opacity: 1; transform: translate(-50%, 0); }
+/* Cualquier panel a pantalla completa (fila, DJ): sin la barra de arriba */
+html.mobile body:has(#right-panel:not([hidden])) .topbar { display: none; }
