@@ -8,6 +8,10 @@ import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core'
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
 import { MediaSession } from '@jofr/capacitor-media-session'
 import { App } from '@capacitor/app'
+import { TextToSpeech } from '@capacitor-community/text-to-speech'
+import { createLastfm } from './lastfm-web.js'
+import { createGemini, weatherFor } from './gemini-web.js'
+import { getJson, toBase64 } from './store.js'
 import { setupMobileUiWhenReady, goBack } from './mobile-ui.js'
 
 // android/.../MusicPlugin.java (en la compu, para ver el diseño, se puede simular con window.__musicWeb)
@@ -76,6 +80,25 @@ document.addEventListener('visibilitychange', () => {
 })
 
 const notYet = () => Promise.resolve({ error: 'Todavía no está en la versión de celular' })
+// Como en main.js: los errores viajan como { error } para que el renderer decida el respaldo
+const wrap = fn => (...a) => Promise.resolve().then(() => fn(...a)).then(v => ({ ok: v }), e => ({ error: e.message }))
+
+const lastfm = createLastfm()
+const gemini = createGemini()
+
+// Voz de respaldo: la de Android (el WebView no trae speechSynthesis y Dalia necesita algo que
+// el celular no puede abrir). renderer.js usa speechSynthesis cuando no hay archivo de voz.
+if (Capacitor.isNativePlatform()) {
+  window.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; this.rate = 1; this.lang = 'es-MX' } }
+  window.speechSynthesis = {
+    getVoices: () => [],
+    cancel: () => { TextToSpeech.stop().catch(() => {}) },
+    speak: u => {
+      TextToSpeech.speak({ text: u.text, lang: 'es-MX', rate: u.rate || 1, pitch: 1.05, category: 'playback' })
+        .then(() => u.onend?.(), () => u.onerror?.())
+    },
+  }
+}
 
 // En el celular los paneles tapan toda la pantalla: al abrir la app se empieza en Inicio
 try { localStorage.setItem('sd.rightMode', 'null') } catch {}
@@ -112,12 +135,12 @@ window.api = {
   winClose: () => {}, winMinimize: () => {}, winMaximize: () => {},
   openExternal: url => window.open(url, '_blank'),
 
-  // Fase 2: Last.fm
-  lastfmStatus: async () => ({ hasKey: false }),
-  lastfmSetKey: notYet,
-  lastfmCached: async () => ({ tracks: {}, artists: {} }),
-  lastfmTags: async () => null,
-  lastfmSimilar: async () => null,
+  // Last.fm (géneros, moods y radio)
+  lastfmStatus: async () => ({ hasKey: lastfm.hasKey() }),
+  lastfmSetKey: key => lastfm.setKey(key),
+  lastfmCached: () => lastfm.cached(),
+  lastfmTags: q => lastfm.tags(q),
+  lastfmSimilar: q => lastfm.similar(q),
 
   // Fase 3: análisis de audio
   audioCached: async () => ({}),
@@ -125,17 +148,29 @@ window.api = {
   onAudioResult: cb => listeners.audioResult.push(cb),
   onAudioProgress: cb => listeners.audioProgress.push(cb),
 
-  // Fase 2: DJ Nat (Gemini) y clima
-  geminiStatus: async () => ({ hasKey: false }),
-  geminiSetKey: notYet,
-  djSay: notYet,
-  djSayNow: notYet,
-  djCached: async () => false,
-  djClean: async () => 0,
-  djThink: notYet,
-  djChatLog: () => {},
+  // DJ Nat (Gemini) y clima
+  geminiStatus: async () => ({ hasKey: gemini.hasKey() }),
+  geminiSetKey: key => gemini.setKey(key),
+  // engine 'dalia': en el celular no hay; el renderer usa entonces la voz de Android
+  djSay: wrap((text, engine) => engine === 'gemini' ? gemini.say(text) : Promise.reject(new Error('sin dalia'))),
+  djSayNow: async (text, id) => {
+    try {
+      return { ok: await gemini.sayNow(text, buf => { const b = toBase64(buf); for (const cb of listeners.djChunk) cb(id, b) }) }
+    } catch (e) { return { error: e.message, partial: !!e.partial } }
+  },
+  djCached: text => gemini.cached(text),
+  djClean: keep => gemini.cleanup(keep),
+  djThink: wrap((system, prompt, schema, urgent) => gemini.think(system, prompt, schema, urgent)),
+  // Lo que le escribes a Nat (para después hacer frases con tu estilo): las últimas 500
+  djChatLog: (who, text) => {
+    try {
+      const log = JSON.parse(localStorage.getItem('sd.djChat') || '[]')
+      log.push([new Date().toLocaleString('es-MX'), who, String(text).replace(/\s+/g, ' ')])
+      localStorage.setItem('sd.djChat', JSON.stringify(log.slice(-500)))
+    } catch {}
+  },
   onDjChunk: cb => listeners.djChunk.push(cb),
-  weather: async () => null,
+  weather: city => weatherFor(city, getJson),
 
   // Foto y fans del artista (Deezer, sin key): para "Acerca del artista" y la página de artista.
   // Se guarda por artista: cada uno se busca una sola vez (30 días)
