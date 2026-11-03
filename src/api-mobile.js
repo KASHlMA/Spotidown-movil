@@ -246,6 +246,14 @@ window.api = {
       navigator.mediaSession.playbackState = 'playing'
     } else if (audio.paused) navigator.mediaSession.playbackState = 'paused'
   },
+  // Cortes en la voz del DJ (las últimas 100 veces que habló), para saber si es el internet
+  djVoiceLog: e => {
+    try {
+      const log = JSON.parse(localStorage.getItem('dj-voice-log') || '[]')
+      log.push({ at: Date.now(), net: navigator.connection?.effectiveType, ...e })
+      localStorage.setItem('dj-voice-log', JSON.stringify(log.slice(-100)))
+    } catch {}
+  },
   // Carátula grande para Reproduciendo y las portadas (covers-hd.js)
   hdCover: song => hdCover(Music, song, window.api.fileUrl),
   readMeta: async path => {
