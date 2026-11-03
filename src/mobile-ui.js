@@ -478,6 +478,16 @@ function setupDj() {
     setTimeout(() => sd.djAsk(text), sd.dj.on ? 0 : 600)
   }
   sheet.querySelector('form').addEventListener('submit', e => { e.preventDefault(); send(input.value) })
+  // Con texto escrito, el micrófono se vuelve el botón de enviar (como Spotify)
+  const mic = sheet.querySelector('.m-dj-mic'), MIC = mic.innerHTML, SEND = icon('M2.01 21 23 12 2.01 3 2 10l15 2-15 2z')
+  const markMic = () => {
+    const typing = !!input.value.trim()
+    if (mic.classList.contains('send') === typing) return
+    mic.classList.toggle('send', typing)
+    mic.innerHTML = typing ? SEND : MIC
+    mic.title = typing ? 'Enviar' : 'Dictar'
+  }
+  input.addEventListener('input', markMic)
   sheet.querySelector('.m-dj-now-play').addEventListener('click', () => $('btn-play').click())
   sheet.querySelector('.m-dj-chips').addEventListener('click', e => {
     const c = e.target.closest('button')
@@ -487,6 +497,7 @@ function setupDj() {
   })
   // Micrófono: dictado de Android (pide permiso la primera vez)
   sheet.querySelector('.m-dj-mic').addEventListener('click', async () => {
+    if (mic.classList.contains('send')) { send(input.value); return }
     const SR = SpeechRecognition
     try {
       const p = await SR.checkPermissions()
@@ -523,6 +534,7 @@ function setupDj() {
       `<button data-switch="1" class="m-dj-chip-switch"><span class="mini-orb"><i></i><i></i><i></i></span>${sd.dj.on ? 'Cambia la vibra' : 'Iniciar DJ'}</button>` +
       suggestions().map(t => `<button>${esc(t)}</button>`).join('')
     input.value = ''
+    markMic()
     sheet.hidden = false
   }
   function closeSheet() { sheet.hidden = true; input.blur() }
