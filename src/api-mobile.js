@@ -127,6 +127,16 @@ const mediaSessionShim = {
 // Botones extra de la notificación, a la derecha (MediaSessionService.java, parche en patches/):
 // aleatorio (con puntito si está prendido) y DJ (si está sonando el DJ cambia la vibra; si no, lo arranca)
 function setupExtraButtons() {
+  // Por dónde va la canción (renderer.js no lo manda: en escritorio no hace falta). Con esto la
+  // barra de la notificación y de la isla avanza sola; se manda al cambiar algo y cada 5 s.
+  const audio = document.getElementById('audio')
+  const sendPos = () => {
+    if (!audio.duration || !isFinite(audio.duration)) return
+    MediaSession.setPositionState({ duration: audio.duration, position: Math.min(audio.currentTime, audio.duration), playbackRate: audio.paused ? 0 : audio.playbackRate }).catch(() => {})
+  }
+  for (const ev of ['play', 'pause', 'seeked', 'durationchange', 'ratechange']) audio.addEventListener(ev, sendPos)
+  setInterval(() => { if (!audio.paused) sendPos() }, 5000)
+  sendPos()
   const shuffleBtn = document.getElementById('btn-shuffle')
   const syncShuffle = () => MediaSession.setShuffle({ on: shuffleBtn.classList.contains('active') }).catch(() => {})
   syncShuffle()

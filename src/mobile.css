@@ -346,8 +346,8 @@ html.mobile body.rp-np .m-np-more svg { width: 24px; height: 24px; }
 html.mobile body.rp-np #rp-title { margin-right: 0; }
 .m-lyr-now { display: none; }
 html.mobile .m-lyr-now:not(:empty) {
-  display: block; font-size: 17px; font-weight: 700; color: #fff; margin: 2px 0 14px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  font-size: 15px; line-height: 1.3; font-weight: 700; color: #fff; margin: 2px 0 14px;
 }
 
 /* ── Fila de reproducción como Spotify ── */
@@ -577,14 +577,15 @@ html.mobile #rp-np .np-switch svg { width: 16px; height: 16px; }
 /* Carátula chiquita junto al título (sólo con video) */
 .m-np-thumb { display: none; }
 html.mobile #right-panel.canvas-mode .m-np-thumb { display: block; width: 52px; height: 52px; border-radius: 4px; object-fit: cover; flex: none; margin-right: 12px; }
-/* Con video los controles van más arriba (como Spotify): se asoma la letra abajo */
-html.mobile #right-panel.canvas-mode .m-np-top { min-height: calc(100dvh - 136px - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+/* Con video los controles van más arriba (como Spotify), y el video llena toda la pantalla: la
+   tarjeta de la letra queda abajo, fuera de la vista (se ve al deslizar) */
+html.mobile #right-panel.canvas-mode .m-np-top { min-height: calc(100dvh - 64px); padding-bottom: 150px; }
 /* Al tocar el video: sólo la canción y la barra */
 html.mobile body.m-np-clean .bar-controls, html.mobile body.m-np-clean .m-np-extra,
-html.mobile body.m-np-clean #rp-np .np-switch, html.mobile body.m-np-clean .m-lyr-now,
+html.mobile body.m-np-clean #rp-np .np-switch,
 html.mobile body.m-np-clean #np-like { visibility: hidden; }
 html.mobile #right-panel.canvas-mode .np-title, html.mobile #right-panel.canvas-mode .np-artist { text-shadow: 0 1px 8px rgba(0,0,0,.6); }
 /* Con video el espacio de la carátula no ocupa lugar (el video está detrás de todo); menos
    mientras habla el DJ, que usa ese lugar para su orbe */
 html.mobile body:not(.m-dj-talk) #right-panel.canvas-mode .m-np-top .np-media { height: 0; aspect-ratio: auto; margin: 0; }
-html.mobile body.m-dj-talk #right-panel.canvas-mode .m-np-top { min-height: calc(100dvh - 136px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+html.mobile body.m-dj-talk #right-panel.canvas-mode .m-np-top { min-height: calc(100dvh - 136px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding-bottom: 0; }
